@@ -1,0 +1,36 @@
+# Java heap dumps
+*.hprof
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Local configuration
+local.properties
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kotlin
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Android
+/captures
+.externalNativeBuild
+.cxx
+
