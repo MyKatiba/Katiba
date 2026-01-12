@@ -142,6 +142,43 @@ object ConstitutionRepository {
     fun getArticlesByTopic(topic: String): List<Pair<Chapter, Article>> {
         return searchArticles(topic)
     }
+
+    /**
+     * Get a condensed summary of the constitution for AI context (RAG).
+     * This provides key information without overwhelming token limits.
+     */
+    fun getContextSummary(): String {
+        if (!isLoaded()) return ""
+        
+        val summaryBuilder = StringBuilder()
+        summaryBuilder.appendLine("CONSTITUTION OF KENYA, 2010")
+        summaryBuilder.appendLine("=" .repeat(50))
+        summaryBuilder.appendLine()
+        
+        // Add preamble summary
+        if (preamble.isNotBlank()) {
+            summaryBuilder.appendLine("PREAMBLE:")
+            summaryBuilder.appendLine(preamble.take(500))
+            if (preamble.length > 500) summaryBuilder.appendLine("...")
+            summaryBuilder.appendLine()
+        }
+        
+        // Add chapters and articles summary
+        for (chapter in chapters) {
+            summaryBuilder.appendLine("CHAPTER ${chapter.number}: ${chapter.title}")
+            for (article in chapter.articles) {
+                summaryBuilder.appendLine("  Article ${article.number}: ${article.title}")
+                // Include first clause of each article
+                article.clauses.firstOrNull()?.let { clause ->
+                    val shortText = clause.text.take(200)
+                    summaryBuilder.appendLine("    ${shortText}${if (clause.text.length > 200) "..." else ""}")
+                }
+            }
+            summaryBuilder.appendLine()
+        }
+        
+        return summaryBuilder.toString()
+    }
 }
 
 /**

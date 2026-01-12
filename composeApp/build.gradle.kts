@@ -39,6 +39,9 @@ kotlin {
         }
     }
 
+    // Properly configure source set hierarchy for iOS
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
