@@ -254,7 +254,7 @@ private fun ClauseContent(clause: Clause) {
                     modifier = Modifier.width(32.dp)
                 )
                 Text(
-                    text = subClause,
+                    text = subClause.text,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                     lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.4f

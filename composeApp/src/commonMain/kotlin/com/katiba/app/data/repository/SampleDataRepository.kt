@@ -4,57 +4,115 @@ import com.katiba.app.data.model.*
 
 /**
  * Sample data repository providing static content for UI prototyping.
- * Will be replaced with actual API calls to Node.js backend later.
+ * Now integrates with ConstitutionRepository for full constitution data.
  */
 object SampleDataRepository {
     
     fun getDailyContent(): DailyContent {
+        // Try to get real data from ConstitutionRepository
+        if (ConstitutionRepository.isLoaded()) {
+            val (chapter, article) = ConstitutionRepository.getRandomArticle()
+                ?: return getFallbackDailyContent()
+
+            val clause = article.clauses.firstOrNull() ?: return getFallbackDailyContent()
+
+            return DailyContent(
+                id = "daily_${article.number}",
+                date = "2026-01-12",
+                clause = clause,
+                chapterTitle = chapter.title,
+                articleTitle = article.title,
+                articleNumber = article.number,
+                aiDescription = generateAiDescription(article, chapter),
+                videoUrl = "",
+                videoThumbnailUrl = "",
+                educatorName = "Constitutional Expert",
+                nextSteps = generateNextSteps(article),
+                tips = generateTips(chapter)
+            )
+        }
+        return getFallbackDailyContent()
+    }
+
+    private fun getFallbackDailyContent(): DailyContent {
         return DailyContent(
-            id = "daily_2024_12_29",
-            date = "2024-12-29",
+            id = "daily_2026_01_12",
+            date = "2026-01-12",
             clause = Clause(
                 number = "1",
-                text = "All sovereign power belongs to the people of Kenya and shall be exercised only in accordance with this Constitution.",
-                subClauses = listOf(
-                    "The people may exercise their sovereign power either directly or through their democratically elected representatives.",
-                    "Sovereign power under this Constitution is delegated to the following State organs, which shall perform their functions in accordance with this Constitution—"
-                )
+                text = "Every person has the right to life. The life of a person begins at conception.",
+                subClauses = emptyList()
             ),
-            chapterTitle = "Chapter One - Sovereignty of the People and Supremacy of this Constitution",
-            articleTitle = "Sovereignty of the people",
-            articleNumber = 1,
+            chapterTitle = "The Bill of Rights",
+            articleTitle = "Right to life",
+            articleNumber = 26,
             aiDescription = """
-                Article 1 of the Kenyan Constitution establishes the fundamental principle that all power in Kenya belongs to its citizens. This is a cornerstone of democratic governance, emphasizing that the government derives its authority from the people.
-
-                This article ensures that no single person or institution can claim absolute power. Instead, power is distributed among various state organs—the Parliament, the Executive, and the Judiciary—each accountable to the people.
-
-                The people exercise this power in two ways:
-                1. **Directly** - through referendums, public participation, and civic engagement
-                2. **Indirectly** - through elected representatives at national and county levels
-
-                This principle protects Kenyans from authoritarian rule and guarantees that leaders must always act in the public interest.
+                Article 26 of the Kenyan Constitution protects the most fundamental right of all—the right to life. 
+                It states that every person has the right to life and that this life begins at conception.
+                
+                The Constitution also provides specific circumstances regarding the termination of pregnancy, which can only be done if a trained health professional opinion is that there is need for emergency treatment, or the life or health of the mother is in danger, or if permitted by any other law.
             """.trimIndent(),
-            videoUrl = "https://example.com/videos/article1_explained.mp4",
-            videoThumbnailUrl = "https://example.com/thumbnails/article1.jpg",
-            educatorName = "Dr. Wanjiku Mwangi",
+            videoUrl = "https://example.com/videos/article26_explained.mp4",
+            videoThumbnailUrl = "https://example.com/thumbnails/article26.jpg",
+            educatorName = "Hon. Martha Karua",
             nextSteps = listOf(
-                "Register to vote in your local polling station if you haven't already",
-                "Attend your County Assembly's public participation sessions",
-                "Join a civic education group in your community",
-                "Follow your elected representatives' activities and hold them accountable",
-                "Participate in public forums on proposed legislation"
+                "Understand the legal protections for the right to life",
+                "Learn about the exceptions provided in the Constitution",
+                "Discuss the importance of the Bill of Rights in protecting citizens"
             ),
             tips = listOf(
-                "Know your elected leaders at all levels - from MCA to President",
-                "Use your right to petition Parliament on issues that matter to you",
-                "Join community meetings to voice your concerns directly",
-                "Report any abuse of power through proper channels",
-                "Teach young people about their sovereign rights as citizens"
+                "The Bill of Rights is the foundation of our democracy",
+                "Every person's life is sacred and protected by law",
+                "Know your rights and how to defend them"
             )
         )
     }
     
+    private fun generateAiDescription(article: Article, chapter: Chapter): String {
+        val clauseTexts = article.clauses.take(2).joinToString("\n\n") { clause ->
+            val subClauseText = if (clause.subClauses.isNotEmpty()) {
+                "\n" + clause.subClauses.joinToString("\n") { "(${it.label}) ${it.text}" }
+            } else ""
+            "Clause ${clause.number}: ${clause.text}$subClauseText"
+        }
+
+        return """
+            Article ${article.number} - ${article.title}
+            
+            This article is part of Chapter ${chapter.number}: ${chapter.title}.
+            
+            $clauseTexts
+            
+            Understanding this article helps you know your constitutional rights and responsibilities as a Kenyan citizen.
+        """.trimIndent()
+    }
+
+    private fun generateNextSteps(article: Article): List<String> {
+        return listOf(
+            "Read the full text of Article ${article.number}",
+            "Understand how ${article.title} applies to your daily life",
+            "Learn about related articles in the Constitution",
+            "Discuss with friends and family about these provisions"
+        )
+    }
+
+    private fun generateTips(chapter: Chapter): List<String> {
+        return listOf(
+            "Chapter ${chapter.number} covers: ${chapter.title}",
+            "The Constitution is the supreme law of Kenya",
+            "Every citizen has the right to know and understand the Constitution"
+        )
+    }
+
     fun getChapters(): List<Chapter> {
+        // Use ConstitutionRepository if loaded, otherwise fall back to sample data
+        if (ConstitutionRepository.isLoaded()) {
+            return ConstitutionRepository.chapters
+        }
+        return getSampleChapters()
+    }
+
+    private fun getSampleChapters(): List<Chapter> {
         return listOf(
             Chapter(
                 number = 1,

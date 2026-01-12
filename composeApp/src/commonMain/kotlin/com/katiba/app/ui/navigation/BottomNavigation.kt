@@ -1,17 +1,40 @@
 package com.katiba.app.ui.navigation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.katiba.app.ui.theme.KatibaColors
 
 /**
@@ -19,12 +42,13 @@ import com.katiba.app.ui.theme.KatibaColors
  */
 enum class BottomNavTab(
     val label: String,
-    val route: NavKey
+    val route: NavKey,
+    val selectedColor: Color
 ) {
-    HOME("Home", HomeRoute),
-    KATIBA("Katiba", ConstitutionRoute),
-    PLANS("Plans", PlansRoute),
-    PROFILE("Profile", ProfileRoute)
+    HOME("Home", HomeRoute, KatibaColors.KenyaGreen),
+    KATIBA("Katiba", ConstitutionRoute, KatibaColors.KenyaRed),
+    PLANS("Plans", PlansRoute, KatibaColors.BeadGold),
+    PROFILE("Profile", ProfileRoute, Color(0xFF6B7280))
 }
 
 @Composable
@@ -33,32 +57,112 @@ fun KatibaBottomNavigation(
     onTabSelected: (BottomNavTab) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    NavigationBar(
-        modifier = modifier,
-        containerColor = Color.White,
-        contentColor = KatibaColors.KenyaBlack
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = Color.White,
+        shadowElevation = 8.dp,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
-        BottomNavTab.entries.forEach { tab ->
-            val isSelected = tab == currentTab
-            NavigationBarItem(
-                selected = isSelected,
-                onClick = { onTabSelected(tab) },
-                icon = {
-                    Icon(
-                        imageVector = getTabIcon(tab),
-                        contentDescription = tab.label,
-                        modifier = Modifier.size(24.dp)
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Main navigation row - raised higher
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .padding(top = 12.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BottomNavTab.entries.forEach { tab ->
+                    val isSelected = tab == currentTab
+                    BottomNavItem(
+                        tab = tab,
+                        isSelected = isSelected,
+                        onClick = { onTabSelected(tab) }
                     )
-                },
-                label = { Text(tab.label) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = KatibaColors.KenyaGreen,
-                    selectedTextColor = KatibaColors.KenyaGreen,
-                    unselectedIconColor = KatibaColors.OnSurfaceVariant,
-                    unselectedTextColor = KatibaColors.OnSurfaceVariant,
-                    indicatorColor = KatibaColors.KenyaGreen.copy(alpha = 0.1f)
-                )
+                }
+            }
+            // Extra space at the bottom for phone's navigation bar
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun BottomNavItem(
+    tab: BottomNavTab,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    // Background for selected state with animation
+    val backgroundColor = if (isSelected) {
+        tab.selectedColor.copy(alpha = 0.15f)
+    } else {
+        Color.Transparent
+    }
+
+    val iconColor = if (isSelected) {
+        tab.selectedColor
+    } else {
+        Color(0xFF9CA3AF) // Gray for unselected
+    }
+
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(24.dp))
+            .background(backgroundColor)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
             )
+            .padding(
+                horizontal = if (isSelected) 16.dp else 12.dp,
+                vertical = 8.dp
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = getTabIcon(tab),
+                contentDescription = tab.label,
+                modifier = Modifier.size(24.dp),
+                tint = iconColor
+            )
+
+            // Animated visibility for label - only show when selected
+            AnimatedVisibility(
+                visible = isSelected,
+                enter = fadeIn() + expandHorizontally(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ),
+                exit = fadeOut() + shrinkHorizontally(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                )
+            ) {
+                Row {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = tab.label,
+                        color = tab.selectedColor,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }

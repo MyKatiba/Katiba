@@ -1,7 +1,7 @@
 # Katiba - Comprehensive Project Documentation
 
-> **Version:** 1.0  
-> **Last Updated:** December 30, 2025  
+> **Version:** 1.1  
+> **Last Updated:** January 12, 2026  
 > **Platform:** Kotlin Multiplatform Mobile (Android & iOS)
 
 ---
@@ -266,6 +266,22 @@ Comprehensive app configuration:
 - Android Compile SDK: 34
 - iOS: iOS 14+
 ```
+
+#### Kotlin Coding Conventions Compliance
+
+This project adheres to the official [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html):
+
+| Convention | Implementation |
+|------------|----------------|
+| **Package Naming** | Lowercase, no underscores (e.g., `com.katiba.app.ui.home`) |
+| **Class Naming** | UpperCamelCase (e.g., `HomeScreen`, `ClauseRepository`) |
+| **Function Naming** | lowerCamelCase (e.g., `getDailyClause`, `navigateToProfile`) |
+| **Property Naming** | lowerCamelCase (e.g., `currentStreak`, `isLoading`) |
+| **Source File Naming** | UpperCamelCase matching class name (e.g., `HomeScreen.kt`) |
+| **Directory Structure** | Follows package hierarchy (`ui/`, `data/`, `navigation/`) |
+| **Indentation** | 4 spaces |
+| **Max Line Length** | 120 characters |
+| **Trailing Commas** | Used in multiline declarations |
 
 ### Project Architecture
 

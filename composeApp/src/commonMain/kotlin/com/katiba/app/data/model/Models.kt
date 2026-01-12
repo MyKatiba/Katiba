@@ -29,7 +29,25 @@ data class Article(
 data class Clause(
     val number: String,
     val text: String,
-    val subClauses: List<String> = emptyList()
+    val subClauses: List<SubClause> = emptyList()
+)
+
+/**
+ * Represents a sub-clause within a clause (e.g., (a), (b), (c))
+ */
+@Serializable
+data class SubClause(
+    val label: String,
+    val text: String
+)
+
+/**
+ * Full Constitution structure for YAML loading
+ */
+@Serializable
+data class Constitution(
+    val preamble: String = "",
+    val chapters: List<Chapter>
 )
 
 /**

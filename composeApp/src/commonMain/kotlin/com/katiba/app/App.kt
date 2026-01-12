@@ -1,10 +1,15 @@
 package com.katiba.app
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.activity.compose.BackHandler
+import com.katiba.app.data.repository.ConstitutionRepository
 import com.katiba.app.ui.constitution.ClauseGridScreen
 import com.katiba.app.ui.constitution.ConstitutionScreen
 import com.katiba.app.ui.constitution.ReadingScreen
@@ -15,15 +20,61 @@ import com.katiba.app.ui.plans.PlansScreen
 import com.katiba.app.ui.profile.ProfileScreen
 import com.katiba.app.ui.profile.SettingsScreen
 import com.katiba.app.ui.theme.KatibaTheme
+import katiba.composeapp.generated.resources.Res
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.ExperimentalResourceApi
 
+@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun App() {
+    // Load constitution data on first composition
+    var isConstitutionLoaded by remember { mutableStateOf(ConstitutionRepository.isLoaded()) }
+
+    LaunchedEffect(Unit) {
+        if (!ConstitutionRepository.isLoaded()) {
+            withContext(Dispatchers.Default) {
+                try {
+                    val jsonBytes = Res.readBytes("files/constitution.json")
+                    val jsonString = jsonBytes.decodeToString()
+                    ConstitutionRepository.loadFromJson(jsonString)
+                    isConstitutionLoaded = true
+                } catch (e: Exception) {
+                    // Log error but continue - app can work with sample data
+                    println("Failed to load constitution: ${e.message}")
+                    isConstitutionLoaded = true // Continue anyway
+                }
+            }
+        }
+    }
+
     KatibaTheme {
+        if (!isConstitutionLoaded) {
+            // Show loading indicator while constitution data loads
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            AppContent()
+        }
+    }
+}
+
+@Composable
+private fun AppContent() {
         // Navigation 3 Style: You own the backstack as a mutable list
         val backStack = rememberNavBackStack(HomeRoute)
 
         // Helper to get current route from backstack
         val currentKey = backStack.lastOrNull()
+
+        // Handle system back button/swipe navigation
+        BackHandler(enabled = backStack.size > 1) {
+            backStack.removeLast()
+        }
 
         // Determine current tab based on the current key
         val currentTab = remember(currentKey) {
@@ -31,7 +82,8 @@ fun App() {
                 is HomeRoute,
                 is ClauseDetailRoute,
                 is AIDescriptionRoute,
-                is TipsRoute -> BottomNavTab.HOME
+                is TipsRoute,
+                is MzalendoRoute -> BottomNavTab.HOME
 
                 is ConstitutionRoute,
                 is ChapterListRoute,
@@ -42,7 +94,8 @@ fun App() {
                 is LessonRoute -> BottomNavTab.PLANS
 
                 is ProfileRoute,
-                is SettingsRoute -> BottomNavTab.PROFILE
+                is SettingsRoute,
+                is NotificationsRoute -> BottomNavTab.PROFILE
 
                 else -> BottomNavTab.HOME
             }
@@ -98,7 +151,25 @@ fun App() {
                             },
                             onTipsCardClick = {
                                 backStack.add(TipsRoute("today"))
+                            },
+                            onNotificationsClick = {
+                                backStack.add(NotificationsRoute)
+                            },
+                            onMzalendoClick = {
+                                backStack.add(MzalendoRoute)
                             }
+                        )
+                    }
+
+                    entry<MzalendoRoute> {
+                        MzalendoScreen(
+                            onBackClick = { backStack.removeLast() }
+                        )
+                    }
+
+                    entry<NotificationsRoute> {
+                        NotificationsScreen(
+                            onBackClick = { backStack.removeLast() }
                         )
                     }
 
@@ -186,5 +257,4 @@ fun App() {
                 }
             )
         }
-    }
 }

@@ -51,6 +51,12 @@ data class LessonRoute(val lessonId: String) : NavKey
 @Serializable
 data object SettingsRoute : NavKey
 
+@Serializable
+data object NotificationsRoute : NavKey
+
+@Serializable
+data object MzalendoRoute : NavKey
+
 /**
  * SerializersModule for KMP state preservation
  * Required for iOS/Native targets where reflection is not available
@@ -69,5 +75,7 @@ val navKeySerializersModule = SerializersModule {
         subclass(ReadingRoute::class, ReadingRoute.serializer())
         subclass(LessonRoute::class, LessonRoute.serializer())
         subclass(SettingsRoute::class, SettingsRoute.serializer())
+        subclass(NotificationsRoute::class, NotificationsRoute.serializer())
+        subclass(MzalendoRoute::class, MzalendoRoute.serializer())
     }
 }
