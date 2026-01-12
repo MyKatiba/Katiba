@@ -19,6 +19,7 @@ class GeminiApiClient {
     private val json = Json {
         ignoreUnknownKeys = true
         isLenient = true
+        encodeDefaults = false  // Don't send null fields
     }
 
     private val httpClient = HttpClient {
@@ -32,7 +33,19 @@ class GeminiApiClient {
         }
     }
 
-    private val systemPrompt = """
+    // Constitution context for RAG - will be set via setConstitutionContext
+    private var constitutionContext: String = ""
+
+    /**
+     * Set the constitution JSON content for grounding responses.
+     * Call this once when loading the constitution data.
+     */
+    fun setConstitutionContext(jsonContent: String) {
+        constitutionContext = jsonContent
+    }
+
+    private fun buildSystemPrompt(): String {
+        val basePrompt = """
 You are Mzalendo, a friendly and knowledgeable AI assistant specializing in the Constitution of Kenya (2010). 
 Your name "Mzalendo" means "patriot" in Kiswahili, reflecting your dedication to helping Kenyans understand their constitutional rights and responsibilities.
 
@@ -53,29 +66,34 @@ Important guidelines:
 - Respond in the same language the user uses (English or Kiswahili)
 
 Remember: You are helping build an informed citizenry that understands and values the Constitution of Kenya.
-    """.trimIndent()
+        """.trimIndent()
+
+        // Add constitution context if available (RAG approach)
+        return if (constitutionContext.isNotBlank()) {
+            """
+$basePrompt
+
+IMPORTANT: Use the following Constitution of Kenya data as your primary source of truth when answering questions:
+
+$constitutionContext
+            """.trimIndent()
+        } else {
+            basePrompt
+        }
+    }
 
     suspend fun sendMessage(userMessage: String, conversationHistory: List<ChatMessage> = emptyList()): Result<String> {
         return try {
             val apiKey = ApiConfig.geminiApiKey
             if (apiKey.isBlank()) {
-                return Result.failure(Exception("API key not configured"))
+                return Result.failure(Exception("API key not configured. Please add GEMINI_API_KEY to local.properties"))
             }
 
-            val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey"
+            // Updated to use gemini-2.5-flash model
+            val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
-            // Build conversation contents
+            // Build conversation contents (without system instruction workaround)
             val contents = buildList {
-                // Add system instruction as the first user message
-                add(GeminiContent(
-                    role = "user",
-                    parts = listOf(GeminiPart(text = "System instruction: $systemPrompt"))
-                ))
-                add(GeminiContent(
-                    role = "model",
-                    parts = listOf(GeminiPart(text = "Understood. I am Mzalendo, your guide to the Constitution of Kenya. How can I help you today?"))
-                ))
-
                 // Add conversation history
                 conversationHistory.forEach { message ->
                     add(GeminiContent(
@@ -91,10 +109,20 @@ Remember: You are helping build an informed citizenry that understands and value
                 ))
             }
 
-            val request = GeminiRequest(contents = contents)
+            // Build system instruction using proper API field
+            val systemInstruction = GeminiContent(
+                parts = listOf(GeminiPart(text = buildSystemPrompt()))
+            )
+
+            val request = GeminiRequest(
+                contents = contents,
+                systemInstruction = systemInstruction
+            )
 
             val response = httpClient.post(url) {
                 contentType(ContentType.Application.Json)
+                // Use header-based authentication (recommended approach)
+                header("x-goog-api-key", apiKey)
                 setBody(json.encodeToString(GeminiRequest.serializer(), request))
             }
 
@@ -106,10 +134,13 @@ Remember: You are helping build an informed citizenry that understands and value
                 Result.success(text)
             } else {
                 val errorBody = response.bodyAsText()
+                // Log the error for debugging
+                println("Gemini API Error: Status=${response.status.value}, Body=$errorBody")
+                
                 val errorMessage = when (response.status.value) {
                     400 -> "Invalid request. Please try rephrasing your question."
                     401, 403 -> "Authentication error. The API key may be invalid or expired."
-                    404 -> "API endpoint not found. Please check your network connection and try again."
+                    404 -> "API endpoint not found. The model name may be invalid or unavailable."
                     429 -> "Too many requests. Please wait a moment and try again."
                     500, 502, 503 -> "The AI service is temporarily unavailable. Please try again later."
                     else -> "API error (${response.status.value}): $errorBody"
@@ -117,6 +148,9 @@ Remember: You are helping build an informed citizenry that understands and value
                 Result.failure(Exception(errorMessage))
             }
         } catch (e: Exception) {
+            // Log the exception for debugging
+            println("Gemini API Exception: ${e.message}")
+            
             // Handle specific network errors with user-friendly messages
             val errorMessage = when {
                 e.message?.contains("Unable to resolve host", ignoreCase = true) == true ||
@@ -139,12 +173,13 @@ Remember: You are helping build an informed citizenry that understands and value
 
 @Serializable
 data class GeminiRequest(
-    val contents: List<GeminiContent>
+    val contents: List<GeminiContent>,
+    val systemInstruction: GeminiContent? = null
 )
 
 @Serializable
 data class GeminiContent(
-    val role: String,
+    val role: String? = null,  // Optional for systemInstruction
     val parts: List<GeminiPart>
 )
 
@@ -171,4 +206,5 @@ data class ChatMessage(
     val isUser: Boolean,
     val timestamp: Long = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
 )
+
 
