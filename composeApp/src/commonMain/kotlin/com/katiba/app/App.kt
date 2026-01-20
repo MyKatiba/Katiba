@@ -8,7 +8,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.activity.compose.BackHandler
 import com.katiba.app.data.repository.ConstitutionRepository
 import com.katiba.app.ui.constitution.ClauseGridScreen
 import com.katiba.app.ui.constitution.ConstitutionScreen

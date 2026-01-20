@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.katiba.app.data.api.ChatMessage
 import com.katiba.app.data.api.GeminiApiClient
+import com.katiba.app.data.repository.ConstitutionRepository
 import com.katiba.app.ui.theme.KatibaColors
 import kotlinx.coroutines.launch
 
@@ -40,7 +41,15 @@ fun MzalendoScreen(
     var inputText by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    val geminiClient = remember { GeminiApiClient() }
+    // Initialize GeminiApiClient with constitution context for RAG
+    val geminiClient = remember { 
+        GeminiApiClient().apply {
+            // Set constitution context for grounding responses
+            if (ConstitutionRepository.isLoaded()) {
+                setConstitutionContext(ConstitutionRepository.getContextSummary())
+            }
+        }
+    }
 
     // Welcome message
     val welcomeMessage = remember {
