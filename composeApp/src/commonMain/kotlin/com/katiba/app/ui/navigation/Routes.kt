@@ -46,6 +46,12 @@ data class ClauseGridRoute(val chapterNumber: Int) : NavKey
 @Serializable
 data class ReadingRoute(val chapterNumber: Int, val articleNumber: Int) : NavKey
 
+@Serializable
+data object SchedulesRoute : NavKey
+
+@Serializable
+data class ScheduleDetailRoute(val scheduleNumber: Int) : NavKey
+
 // Plans screens
 @Serializable
 data class LessonRoute(val lessonId: String) : NavKey
@@ -77,6 +83,8 @@ val navKeySerializersModule = SerializersModule {
         subclass(ChapterListRoute::class, ChapterListRoute.serializer())
         subclass(ClauseGridRoute::class, ClauseGridRoute.serializer())
         subclass(ReadingRoute::class, ReadingRoute.serializer())
+        subclass(SchedulesRoute::class, SchedulesRoute.serializer())
+        subclass(ScheduleDetailRoute::class, ScheduleDetailRoute.serializer())
         subclass(LessonRoute::class, LessonRoute.serializer())
         subclass(SettingsRoute::class, SettingsRoute.serializer())
         subclass(NotificationsRoute::class, NotificationsRoute.serializer())

@@ -1,6 +1,9 @@
 package com.katiba.app.data.repository
 
 import com.katiba.app.data.model.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 /**
  * Sample data repository providing static content for UI prototyping.
@@ -8,28 +11,66 @@ import com.katiba.app.data.model.*
  */
 object SampleDataRepository {
 
+    private var cachedDailyContent: DailyContent? = null
+    private var cachedDate: String? = null
+
+    /**
+     * Get the current date as a string (YYYY-MM-DD format)
+     */
+    private fun getCurrentDate(): String {
+        val now = Clock.System.now()
+        val localDate = now.toLocalDateTime(TimeZone.currentSystemDefault()).date
+        return "${localDate.year}-${localDate.monthNumber.toString().padStart(2, '0')}-${localDate.dayOfMonth.toString().padStart(2, '0')}"
+    }
+
     fun getDailyContent(): DailyContent {
+        val currentDate = getCurrentDate()
+
+        // Return cached content if it's still the same day
+        if (cachedDailyContent != null && cachedDate == currentDate) {
+            return cachedDailyContent!!
+        }
+
+        // Generate new content for the day
+        val newContent = generateDailyContentForDate(currentDate)
+
+        // Cache it
+        cachedDailyContent = newContent
+        cachedDate = currentDate
+
+        return newContent
+    }
+
+    private fun generateDailyContentForDate(date: String): DailyContent {
         // Try to get real data from ConstitutionRepository
         if (ConstitutionRepository.isLoaded()) {
-            val (chapter, article) = ConstitutionRepository.getRandomArticle()
-                ?: return getFallbackDailyContent()
+            val allArticles = ConstitutionRepository.chapters.flatMap { chapter ->
+                chapter.articles.map { article -> chapter to article }
+            }
 
-            val clause = article.clauses.firstOrNull() ?: return getFallbackDailyContent()
+            if (allArticles.isNotEmpty()) {
+                // Use date-based seeded index to get consistent article for the day
+                val dateHash = date.hashCode().let { if (it < 0) -it else it }
+                val articleIndex = dateHash % allArticles.size
+                val (chapter, article) = allArticles[articleIndex]
 
-            return DailyContent(
-                id = "daily_${article.number}",
-                date = "2026-01-12",
-                clause = clause,
-                chapterTitle = chapter.title,
-                articleTitle = article.title,
-                articleNumber = article.number,
-                aiDescription = generateAiDescription(article, chapter),
-                videoUrl = "",
-                videoThumbnailUrl = "",
-                educatorName = "Constitutional Expert",
-                nextSteps = generateNextSteps(article),
-                tips = generateTips(chapter)
-            )
+                val clause = article.clauses.firstOrNull() ?: return getFallbackDailyContent()
+
+                return DailyContent(
+                    id = "daily_${date}_${article.number}",
+                    date = date,
+                    clause = clause,
+                    chapterTitle = chapter.title,
+                    articleTitle = article.title,
+                    articleNumber = article.number,
+                    aiDescription = generateAiDescription(article, chapter),
+                    videoUrl = "",
+                    videoThumbnailUrl = "",
+                    educatorName = "Constitutional Expert",
+                    nextSteps = generateNextSteps(article),
+                    tips = generateTips(chapter)
+                )
+            }
         }
         return getFallbackDailyContent()
     }

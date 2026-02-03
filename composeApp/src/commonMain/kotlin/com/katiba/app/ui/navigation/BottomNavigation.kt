@@ -98,15 +98,16 @@ private fun BottomNavItem(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
 
-    // Background for selected state with animation
+    // Dark green background for selected state, transparent for unselected
     val backgroundColor = if (isSelected) {
-        tab.selectedColor.copy(alpha = 0.15f)
+        KatibaColors.DarkGreen
     } else {
         Color.Transparent
     }
 
-    val iconColor = if (isSelected) {
-        tab.selectedColor
+    // White for selected, gray for unselected
+    val contentColor = if (isSelected) {
+        Color.White
     } else {
         Color(0xFF9CA3AF) // Gray for unselected
     }
@@ -134,7 +135,7 @@ private fun BottomNavItem(
                 imageVector = getTabIcon(tab),
                 contentDescription = tab.label,
                 modifier = Modifier.size(24.dp),
-                tint = iconColor
+                tint = contentColor
             )
 
             // Animated visibility for label - only show when selected
@@ -157,7 +158,7 @@ private fun BottomNavItem(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = tab.label,
-                        color = tab.selectedColor,
+                        color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
                     )

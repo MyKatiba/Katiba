@@ -1,5 +1,6 @@
 package com.katiba.app.ui.profile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -29,6 +31,9 @@ import com.katiba.app.data.model.Badge
 import com.katiba.app.data.model.UserProfile
 import com.katiba.app.data.repository.SampleDataRepository
 import com.katiba.app.ui.theme.KatibaColors
+import katiba.composeapp.generated.resources.Res
+import katiba.composeapp.generated.resources.bracelet
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Profile screen with redesigned layout matching the Kenyan civic app design
@@ -185,36 +190,45 @@ private fun ProfileCard(userProfile: UserProfile) {
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Box(
+        Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Background decorations
+            // Bracelet header image
             Box(
-                modifier = Modifier
-                    .size(128.dp)
-                    .offset(x = (-40).dp, y = (-40).dp)
-                    .background(
-                        color = KatibaColors.KenyaRed.copy(alpha = 0.1f),
-                        shape = CircleShape
-                    )
-                    .align(Alignment.TopStart)
-            )
-            Box(
-                modifier = Modifier
-                    .size(128.dp)
-                    .offset(x = 40.dp, y = 40.dp)
-                    .background(
-                        color = KatibaColors.KenyaGreen.copy(alpha = 0.1f),
-                        shape = CircleShape
-                    )
-                    .align(Alignment.BottomEnd)
-            )
-
-            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .height(100.dp)
+                    .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.bracelet),
+                    contentDescription = "Kenyan beadwork bracelet",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                // Subtle gradient overlay for better avatar visibility
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.White.copy(alpha = 0.3f)
+                                ),
+                                startY = 0f,
+                                endY = Float.POSITIVE_INFINITY
+                            )
+                        )
+                )
+            }
+
+            // Avatar overlapping the header
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y = (-48).dp),
+                contentAlignment = Alignment.Center
             ) {
                 // Avatar with edit button
                 Box {
@@ -265,9 +279,17 @@ private fun ProfileCard(userProfile: UserProfile) {
                         )
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
+            // Content below avatar (adjusted for avatar overlap)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y = (-32).dp)
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 // Name
                 Text(
                     text = "Wanjiku Kamau",

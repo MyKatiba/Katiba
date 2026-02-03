@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -145,42 +146,55 @@ private fun ReadingTopBar(
         TopAppBar(
             title = { },
             navigationIcon = {
-                IconButton(onClick = onMenuClick) {
+                IconButton(
+                    onClick = onMenuClick,
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Menu,
-                        contentDescription = "Menu"
+                        contentDescription = "Menu",
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             },
             actions = {
-                IconButton(onClick = { /* Audio */ }) {
+                IconButton(
+                    onClick = { /* Audio */ },
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Listen"
+                        contentDescription = "Listen",
+                        modifier = Modifier.size(20.dp)
                     )
                 }
-                IconButton(onClick = onSearchClick) {
+                IconButton(
+                    onClick = onSearchClick,
+                    modifier = Modifier.size(40.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Search"
+                        contentDescription = "Search",
+                        modifier = Modifier.size(20.dp)
                     )
                 }
                 // Version/Translation selector placeholder
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = "2010",
-                        style = MaterialTheme.typography.labelMedium,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.background
-            )
+            ),
+            windowInsets = WindowInsets(0.dp)
         )
         HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
     }
@@ -199,12 +213,12 @@ private fun ArticleHeader(
     ) {
         Text(
             text = chapterTitle.split(" - ").lastOrNull() ?: chapterTitle,
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelMedium.copy(fontFamily = FontFamily.Serif),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = articleNumber.toString(),
-            style = MaterialTheme.typography.displayLarge,
+            style = MaterialTheme.typography.displayLarge.copy(fontFamily = FontFamily.Serif),
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -238,30 +252,54 @@ private fun ClauseContent(clause: Clause) {
     
     Text(
         text = annotatedText,
-        style = MaterialTheme.typography.bodyLarge,
+        style = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Serif),
         lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.5f
     )
     
     // Sub-clauses
     if (clause.subClauses.isNotEmpty()) {
         Spacer(modifier = Modifier.height(12.dp))
-        clause.subClauses.forEachIndexed { index, subClause ->
-            Row(
+        clause.subClauses.forEach { subClause ->
+            Column(
                 modifier = Modifier.padding(start = 24.dp, top = 4.dp, bottom = 4.dp)
             ) {
-                Text(
-                    text = "(${('a' + index)})",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = KatibaColors.KenyaGreen,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.width(32.dp)
-                )
-                Text(
-                    text = subClause.text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.4f
-                )
+                Row {
+                    Text(
+                        text = "(${subClause.label})",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Serif),
+                        color = KatibaColors.KenyaGreen,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.width(32.dp)
+                    )
+                    Text(
+                        text = subClause.text,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Serif),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.4f
+                    )
+                }
+                // Sub-sub-clauses (i, ii, iii, etc.)
+                if (subClause.subSubClauses.isNotEmpty()) {
+                    subClause.subSubClauses.forEach { subSubClause ->
+                        Row(
+                            modifier = Modifier.padding(start = 32.dp, top = 4.dp, bottom = 4.dp)
+                        ) {
+                            Text(
+                                text = "(${subSubClause.label})",
+                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Serif),
+                                color = KatibaColors.KenyaGreen.copy(alpha = 0.8f),
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.width(32.dp)
+                            )
+                            Text(
+                                text = subSubClause.text,
+                                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Serif),
+                                color = MaterialTheme.colorScheme.onBackground,
+                                lineHeight = MaterialTheme.typography.bodySmall.lineHeight * 1.4f
+                            )
+                        }
+                    }
+                }
             }
         }
     }

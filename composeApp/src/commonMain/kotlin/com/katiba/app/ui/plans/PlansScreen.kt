@@ -189,7 +189,7 @@ private fun buildPathItems(
     val items = mutableListOf<PathItem>()
     var pathIndex = 0
 
-    lessonsByChapter.toSortedMap().forEach { (chapterNumber, chapterLessons) ->
+    lessonsByChapter.toList().sortedBy { it.first }.forEach { (chapterNumber, chapterLessons) ->
         // Add chapter milestone
         val chapterTitle = getChapterTitle(chapterNumber)
         items.add(

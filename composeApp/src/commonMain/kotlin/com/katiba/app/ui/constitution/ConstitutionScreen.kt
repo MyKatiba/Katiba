@@ -29,6 +29,7 @@ import com.katiba.app.ui.theme.KatibaColors
 fun ConstitutionScreen(
     onChapterClick: (Int) -> Unit,
     onPreambleClick: () -> Unit,
+    onSchedulesClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val chapters = remember { ConstitutionRepository.chapters }
@@ -104,7 +105,8 @@ fun ConstitutionScreen(
                         selectedChapter = chapter
                         onChapterClick(chapter.number)
                     },
-                    onPreambleClick = onPreambleClick
+                    onPreambleClick = onPreambleClick,
+                    onSchedulesClick = onSchedulesClick
                 )
             }
         }
@@ -115,7 +117,8 @@ fun ConstitutionScreen(
 private fun ChapterListView(
     chapters: List<Chapter>,
     onChapterClick: (Chapter) -> Unit,
-    onPreambleClick: () -> Unit
+    onPreambleClick: () -> Unit,
+    onSchedulesClick: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -152,7 +155,7 @@ private fun ChapterListView(
                 articleCount = 6,
                 isPreamble = false,
                 isSchedule = true,
-                onClick = { /* Navigate to schedules */ }
+                onClick = onSchedulesClick
             )
         }
     }
@@ -234,12 +237,5 @@ private fun ChapterListItem(
                 )
             }
         }
-        
-        // Arrow indicator
-        Text(
-            text = "→",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }

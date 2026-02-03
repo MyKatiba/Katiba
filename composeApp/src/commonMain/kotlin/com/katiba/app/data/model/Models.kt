@@ -38,16 +38,50 @@ data class Clause(
 @Serializable
 data class SubClause(
     val label: String,
+    val text: String,
+    val miniClauses: List<MiniClause> = emptyList(),
+    // Keep for backward compatibility
+    val subSubClauses: List<SubSubClause> = emptyList()
+)
+
+/**
+ * Represents a mini-clause within a sub-clause (e.g., (i), (ii), (iii))
+ */
+@Serializable
+data class MiniClause(
+    val label: String,
     val text: String
 )
 
 /**
- * Full Constitution structure for YAML loading
+ * Represents a sub-sub-clause within a sub-clause (e.g., (i), (ii), (iii))
+ * @deprecated Use MiniClause instead
+ */
+@Serializable
+data class SubSubClause(
+    val label: String,
+    val text: String
+)
+
+/**
+ * Represents a schedule in the Constitution
+ */
+@Serializable
+data class Schedule(
+    val number: Int,
+    val title: String,
+    val reference: String = "",
+    val content: kotlinx.serialization.json.JsonElement? = null
+)
+
+/**
+ * Full Constitution structure for JSON loading
  */
 @Serializable
 data class Constitution(
     val preamble: String = "",
-    val chapters: List<Chapter>
+    val chapters: List<Chapter>,
+    val schedules: List<Schedule> = emptyList()
 )
 
 /**

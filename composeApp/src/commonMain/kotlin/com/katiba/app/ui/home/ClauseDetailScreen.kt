@@ -1,28 +1,79 @@
 package com.katiba.app.ui.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.katiba.app.data.repository.SampleDataRepository
 import com.katiba.app.ui.theme.KatibaColors
 
 /**
+ * Story-style progress indicators at the top
+ */
+@Composable
+private fun StoryProgressIndicator(
+    totalSteps: Int,
+    currentStep: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        repeat(totalSteps) { index ->
+            val progress by animateFloatAsState(
+                targetValue = when {
+                    index < currentStep -> 1f
+                    index == currentStep -> 1f
+                    else -> 0f
+                },
+                label = "progress"
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(1.5.dp))
+                    .background(Color.Gray.copy(alpha = 0.3f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(progress)
+                        .background(
+                            if (index <= currentStep) KatibaColors.KenyaRed
+                            else Color.Transparent
+                        )
+                )
+            }
+        }
+    }
+}
+
+/**
  * Focused single-page detail view for the Clause of the Day
+ * Redesigned with story-style progress indicators and modern card layout
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,178 +83,274 @@ fun ClauseDetailScreen(
 ) {
     val dailyContent = remember { SampleDataRepository.getDailyContent() }
     val scrollState = rememberScrollState()
-    
-    Scaffold(
-        topBar = {
-            Column {
-                TopAppBar(
-                    title = { Text("Clause of the Day") },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { /* Share */ }) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = "Share"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = KatibaColors.KenyaGreen,
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White,
-                        actionIconContentColor = Color.White
-                    )
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
-        }
-    ) { paddingValues ->
+
+    // For story progress - could be driven by actual content sections
+    val totalSteps = 5
+    var currentStep by remember { mutableIntStateOf(0) }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
         Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier = Modifier.fillMaxSize()
         ) {
-            // Header gradient
-            Box(
+            // Story progress indicators
+            StoryProgressIndicator(
+                totalSteps = totalSteps,
+                currentStep = currentStep,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+
+            // Top bar with close and navigation
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                KatibaColors.KenyaGreen,
-                                KatibaColors.DarkGreen
-                            )
-                        )
-                    )
-                    .padding(20.dp)
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = dailyContent.chapterTitle,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Article ${dailyContent.articleNumber}",
-                        style = MaterialTheme.typography.displaySmall,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = dailyContent.articleTitle,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = Color.White.copy(alpha = 0.95f)
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = Color.DarkGray
                     )
                 }
+
+                // Navigation arrows could go here for story navigation
+                Row {
+                    IconButton(
+                        onClick = { if (currentStep > 0) currentStep-- },
+                        enabled = currentStep > 0
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Previous",
+                            tint = if (currentStep > 0) Color.DarkGray else Color.Gray.copy(alpha = 0.3f)
+                        )
+                    }
+                }
             }
-            
-            // Content
+
+            // Scrollable content
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .padding(20.dp)
+                    .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Main clause text
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // "CLAUSE OF THE DAY" pill badge
+                Surface(
+                    color = KatibaColors.KenyaRed,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(
+                        text = "CLAUSE OF THE DAY",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Article title
                 Text(
-                    text = dailyContent.clause.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.5f
+                    text = dailyContent.articleTitle,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    textAlign = TextAlign.Center
                 )
-                
-                // Sub-clauses if any
-                if (dailyContent.clause.subClauses.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    dailyContent.clause.subClauses.forEachIndexed { index, subClause ->
+
+                // Chapter subtitle
+                Text(
+                    text = "${dailyContent.chapterTitle}, Part ${dailyContent.articleNumber}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Clause card
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFFFAFAFA),
+                    border = BorderStroke(1.dp, Color(0xFFE8E8E8))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp)
+                    ) {
+                        // Article number and bookmark row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text(
+                                text = "${dailyContent.articleNumber}",
+                                style = MaterialTheme.typography.displaySmall,
+                                fontWeight = FontWeight.Light,
+                                color = Color.Black
+                            )
+                            IconButton(
+                                onClick = { /* Bookmark action */ },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "Save",
+                                    tint = Color.Gray
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Quote with decorative line
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp)
+                                .height(IntrinsicSize.Min)
                         ) {
-                            Text(
-                                text = "(${('a' + index)})",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = KatibaColors.KenyaGreen,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.width(32.dp)
+                            // Decorative vertical line
+                            Box(
+                                modifier = Modifier
+                                    .width(3.dp)
+                                    .fillMaxHeight()
+                                    .background(KatibaColors.KenyaRed)
                             )
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "\"${dailyContent.clause.text}\"",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontStyle = FontStyle.Italic,
+                                    color = Color.Black,
+                                    lineHeight = 28.sp
+                                )
+
+                                // Sub-clauses if any
+                                if (dailyContent.clause.subClauses.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    dailyContent.clause.subClauses.forEach { subClause ->
+                                        Row(
+                                            modifier = Modifier.padding(vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = "(${subClause.label})",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = KatibaColors.KenyaGreen,
+                                                fontWeight = FontWeight.SemiBold,
+                                                modifier = Modifier.width(28.dp)
+                                            )
+                                            Text(
+                                                text = subClause.text,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = Color.Black.copy(alpha = 0.8f)
+                                            )
+                                        }
+                                        // Sub-sub-clauses
+                                        if (subClause.subSubClauses.isNotEmpty()) {
+                                            subClause.subSubClauses.forEach { subSubClause ->
+                                                Row(
+                                                    modifier = Modifier.padding(start = 28.dp, top = 4.dp)
+                                                ) {
+                                                    Text(
+                                                        text = "(${subSubClause.label})",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = KatibaColors.KenyaGreen.copy(alpha = 0.8f),
+                                                        fontWeight = FontWeight.Medium,
+                                                        modifier = Modifier.width(28.dp)
+                                                    )
+                                                    Text(
+                                                        text = subSubClause.text,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = Color.Black.copy(alpha = 0.7f)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Constitution source
+                        Text(
+                            text = "Constitution of Kenya, 2010",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(start = 19.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Understanding this clause section
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Green bullet indicator
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(KatibaColors.KenyaGreen)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Understanding this clause",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // AI description content
+                    Text(
+                        text = dailyContent.aiDescription,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Black.copy(alpha = 0.8f),
+                        lineHeight = 24.sp
+                    )
+
+                    // Tips section if available
+                    if (dailyContent.tips.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        dailyContent.tips.forEach { tip ->
                             Text(
-                                text = subClause.text,
+                                text = tip,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onBackground
+                                color = Color.Black.copy(alpha = 0.8f),
+                                lineHeight = 24.sp,
+                                modifier = Modifier.padding(bottom = 12.dp)
                             )
                         }
                     }
                 }
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                // Beadwork divider
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    KatibaColors.KenyaBlack,
-                                    KatibaColors.KenyaRed,
-                                    KatibaColors.KenyaGreen,
-                                    KatibaColors.KenyaWhite,
-                                    KatibaColors.KenyaGreen,
-                                    KatibaColors.KenyaRed,
-                                    KatibaColors.KenyaBlack
-                                )
-                            )
-                        )
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                // Reference info
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Reference",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Constitution of Kenya, 2010",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "${dailyContent.chapterTitle}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "Article ${dailyContent.articleNumber}: ${dailyContent.articleTitle}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(32.dp))
+
+                Spacer(modifier = Modifier.height(48.dp))
             }
         }
     }

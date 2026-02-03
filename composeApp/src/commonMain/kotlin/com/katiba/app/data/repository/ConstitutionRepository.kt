@@ -39,6 +39,12 @@ object ConstitutionRepository {
         get() = constitution.chapters
 
     /**
+     * Get all schedules of the Constitution.
+     */
+    val schedules: List<Schedule>
+        get() = constitution.schedules
+
+    /**
      * Initialize the repository with constitution JSON data.
      * This should be called once when the app starts, typically from a composable
      * that can access Compose resources.
@@ -93,7 +99,11 @@ object ConstitutionRepository {
                 val matches = article.title.lowercase().contains(lowerQuery) ||
                     article.clauses.any { clause ->
                         clause.text.lowercase().contains(lowerQuery) ||
-                        clause.subClauses.any { sub -> sub.text.lowercase().contains(lowerQuery) }
+                        clause.subClauses.any { sub ->
+                            sub.text.lowercase().contains(lowerQuery) ||
+                            sub.miniClauses.any { mini -> mini.text.lowercase().contains(lowerQuery) } ||
+                            sub.subSubClauses.any { subSub -> subSub.text.lowercase().contains(lowerQuery) }
+                        }
                     }
 
                 if (matches) {
@@ -144,6 +154,13 @@ object ConstitutionRepository {
     }
 
     /**
+     * Get a specific schedule by number.
+     */
+    fun getSchedule(number: Int): Schedule? {
+        return schedules.find { it.number == number }
+    }
+
+    /**
      * Get a condensed summary of the constitution for AI context (RAG).
      * This provides key information without overwhelming token limits.
      */
@@ -176,7 +193,19 @@ object ConstitutionRepository {
             }
             summaryBuilder.appendLine()
         }
-        
+
+        // Add schedules summary
+        if (schedules.isNotEmpty()) {
+            summaryBuilder.appendLine("SCHEDULES:")
+            for (schedule in schedules) {
+                summaryBuilder.appendLine("  Schedule ${schedule.number}: ${schedule.title}")
+                if (schedule.reference.isNotBlank()) {
+                    summaryBuilder.appendLine("    Reference: ${schedule.reference}")
+                }
+            }
+            summaryBuilder.appendLine()
+        }
+
         return summaryBuilder.toString()
     }
 }

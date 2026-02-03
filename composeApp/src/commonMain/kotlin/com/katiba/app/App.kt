@@ -13,6 +13,8 @@ import com.katiba.app.ui.constitution.ClauseGridScreen
 import com.katiba.app.ui.constitution.ConstitutionScreen
 import com.katiba.app.ui.constitution.PreambleScreen
 import com.katiba.app.ui.constitution.ReadingScreen
+import com.katiba.app.ui.constitution.SchedulesScreen
+import com.katiba.app.ui.constitution.ScheduleDetailScreen
 import com.katiba.app.ui.home.*
 import com.katiba.app.ui.navigation.*
 import com.katiba.app.ui.plans.LessonScreen
@@ -35,7 +37,7 @@ fun App() {
         if (!ConstitutionRepository.isLoaded()) {
             withContext(Dispatchers.Default) {
                 try {
-                    val jsonBytes = Res.readBytes("files/constitution.json")
+                    val jsonBytes = Res.readBytes("files/constitution_of_kenya.json")
                     val jsonString = jsonBytes.decodeToString()
                     ConstitutionRepository.loadFromJson(jsonString)
                     isConstitutionLoaded = true
@@ -203,6 +205,9 @@ private fun AppContent() {
                             },
                             onPreambleClick = {
                                 backStack.add(PreambleRoute)
+                            },
+                            onSchedulesClick = {
+                                backStack.add(SchedulesRoute)
                             }
                         )
                     }
@@ -245,15 +250,34 @@ private fun AppContent() {
                         )
                     }
 
-                    entry<LessonRoute> { key ->
-                        LessonScreen(
-                            lessonId = key.lessonId,
+                    entry<ReadingRoute> { key ->
+                        ReadingScreen(
+                            chapterNumber = key.chapterNumber,
+                            articleNumber = key.articleNumber,
                             onBackClick = { backStack.removeLast() },
-                            onCompleteLesson = { backStack.removeLast() }
+                            onNavigateToArticle = { chapter, article ->
+                                backStack.add(ReadingRoute(chapter, article))
+                            }
                         )
                     }
 
-                    // Profile Tab
+                    entry<SchedulesRoute> {
+                        SchedulesScreen(
+                            onScheduleClick = { scheduleNumber ->
+                                backStack.add(ScheduleDetailRoute(scheduleNumber))
+                            },
+                            onBackClick = { backStack.removeLast() }
+                        )
+                    }
+
+                    entry<ScheduleDetailRoute> { key ->
+                        ScheduleDetailScreen(
+                            scheduleNumber = key.scheduleNumber,
+                            onBackClick = { backStack.removeLast() }
+                        )
+                    }
+
+                    // Plans Tab
                     entry<ProfileRoute> {
                         ProfileScreen(
                             onSettingsClick = {
