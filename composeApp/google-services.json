@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "576740059155",
+    "project_id": "katiba-22698",
+    "storage_bucket": "katiba-22698.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:576740059155:android:2f757fb31afee5d24a37e6",
+        "android_client_info": {
+          "package_name": "com.katiba.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9xRgsPIdjHK1s_-OazazB_T3jUnJriXE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

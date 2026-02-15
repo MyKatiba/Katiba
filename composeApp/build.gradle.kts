@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinxSerialization)
+    id("com.google.gms.google-services")
 }
 
 // Load API key from local.properties
@@ -126,4 +127,8 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-ai")
+    implementation("com.google.firebase:firebase-auth")
 }

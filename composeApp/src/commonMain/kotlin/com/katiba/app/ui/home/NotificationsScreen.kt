@@ -47,27 +47,53 @@ fun NotificationsScreen(
             }
         }
     ) { paddingValues ->
-        val notifications = listOf(
-            NotificationItem("BibleProject has a new Plan: \"BibleProject | Finding God in the Wilderness\"", "9 w"),
-            NotificationItem("Kevin Obote accepted your friend request", "12 w"),
-            NotificationItem("Passion Movement has a new Plan: \"Relat(able): Making Relationships Work\"", "29 w"),
-            NotificationItem("Passion Movement has a new Plan: \"The Comeback: It's Not Too Late And You're Never Too Far\"", "29 w"),
-            NotificationItem("Burning Heart has a new teaching clip: \"More on Jesus' Parables\"", "32 w"),
-            NotificationItem("Burning Heart has a new teaching clip: \"Luke 18:14\"", "32 w"),
-            NotificationItem("CBN has a new Plan: \"Finding Hope While Navigating Depression: A 7-Day Devotional\"", "35 w"),
-            NotificationItem("BibleProject has a new Video: \"The Exodus Way\"", "37 w"),
-            NotificationItem("Burning Heart has a new Video: \"The Best Thing Ever\"", "44 w")
-        )
+        // Placeholder notifications removed - will be populated by notification service
+        val notifications = emptyList<NotificationItem>()
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            items(notifications) { notification ->
-                NotificationRow(notification)
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = Color.LightGray)
+        if (notifications.isEmpty()) {
+            // Empty state
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        Icons.Default.Notifications,
+                        contentDescription = null,
+                        tint = Color.Gray.copy(alpha = 0.5f),
+                        modifier = Modifier.size(64.dp)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "No notifications yet",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Gray
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Check back later for updates",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                items(notifications) { notification ->
+                    NotificationRow(notification)
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = Color.LightGray)
+                }
             }
         }
     }

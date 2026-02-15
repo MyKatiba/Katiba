@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.katiba.app.data.model.DailyContent
 import com.katiba.app.data.model.Lesson
 import com.katiba.app.data.repository.SampleDataRepository
+import com.katiba.app.data.repository.StreakManager
 import com.katiba.app.ui.theme.KatibaColors
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -77,7 +78,7 @@ private fun getGradientForDay(): List<Color> {
 }
 
 enum class HomeTab {
-    TODAY, COMMUNITY
+    TODAY//, COMMUNITY
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,6 +102,14 @@ fun HomeScreen(
     var showStreakSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     
+    // Initialize streak on first composition
+    var streakCount by remember { mutableStateOf(0) }
+    var bestStreak by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        streakCount = StreakManager.checkAndUpdateStreak()
+        bestStreak = StreakManager.getBestStreak()
+    }
+    
     var isClauseExpanded by remember { mutableStateOf(false) }
     
     Box(modifier = Modifier.fillMaxSize()) {
@@ -114,7 +123,8 @@ fun HomeScreen(
                 selectedTab = selectedTab,
                 onTabSelected = { selectedTab = it },
                 onStreakClick = { showStreakSheet = true },
-                onNotificationsClick = onNotificationsClick
+                onNotificationsClick = onNotificationsClick,
+                streakCount = streakCount
             )
             
             if (selectedTab == HomeTab.TODAY) {
@@ -165,9 +175,10 @@ fun HomeScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
                 }
-            } else {
-                CommunityScreen()
-            }
+            } 
+            // else {
+            //     CommunityScreen()
+            // }
         }
 
         // Mzalendo AI Assistant FAB
@@ -204,7 +215,9 @@ fun HomeScreen(
     if (showStreakSheet) {
         StreakBottomSheet(
             sheetState = sheetState,
-            onDismiss = { showStreakSheet = false }
+            onDismiss = { showStreakSheet = false },
+            currentStreak = streakCount,
+            bestStreak = bestStreak
         )
     }
 }
@@ -225,7 +238,7 @@ private fun HomeTopBar(
     onTabSelected: (HomeTab) -> Unit,
     onStreakClick: () -> Unit,
     onNotificationsClick: () -> Unit,
-    streakCount: Int = 9 // TODO: Get from user profile
+    streakCount: Int
 ) {
     Column(
         modifier = Modifier
@@ -263,27 +276,28 @@ private fun HomeTopBar(
                     }
                 }
 
-                Column(
-                    modifier = Modifier
-                        .width(IntrinsicSize.Max)
-                        .clickable { onTabSelected(HomeTab.COMMUNITY) },
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Text(
-                        text = "Community",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (selectedTab == HomeTab.COMMUNITY) Color.Black else Color.Gray
-                    )
-                    if (selectedTab == HomeTab.COMMUNITY) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(3.dp)
-                                .background(KatibaColors.KenyaRed)
-                        )
-                    }
-                }
+                // Community tab commented out
+                // Column(
+                //     modifier = Modifier
+                //         .width(IntrinsicSize.Max)
+                //         .clickable { onTabSelected(HomeTab.COMMUNITY) },
+                //     horizontalAlignment = Alignment.Start
+                // ) {
+                //     Text(
+                //         text = "Community",
+                //         style = MaterialTheme.typography.titleLarge,
+                //         fontWeight = FontWeight.Bold,
+                //         color = if (selectedTab == HomeTab.COMMUNITY) Color.Black else Color.Gray
+                //     )
+                //     if (selectedTab == HomeTab.COMMUNITY) {
+                //         Box(
+                //             modifier = Modifier
+                //                 .fillMaxWidth()
+                //                 .height(3.dp)
+                //                 .background(KatibaColors.KenyaRed)
+                //         )
+                //     }
+                // }
             }
 
             Row(
@@ -294,17 +308,18 @@ private fun HomeTopBar(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { onStreakClick() }
                 ) {
-                    // Bolt icon: yellow fill when streak > 0, black outline when streak = 0
+                    // Bolt icon: yellow fill when streak > 0, grey outline when streak = 0
                     Icon(
                         imageVector = if (streakCount > 0) BoltIconFilled else BoltIconOutline,
                         contentDescription = "Streak",
-                        tint = if (streakCount > 0) Color(0xFFFFD700) else Color.Black,
+                        tint = if (streakCount > 0) Color(0xFFFFD700) else Color.Gray,
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = "$streakCount",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        fontSize = 18.sp,
+                        color = if (streakCount > 0) Color.Black else Color.Gray
                     )
                 }
 
@@ -325,8 +340,11 @@ private fun HomeTopBar(
 @Composable
 fun StreakBottomSheet(
     sheetState: SheetState,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    currentStreak: Int,
+    bestStreak: Int
 ) {
+    
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -367,14 +385,34 @@ fun StreakBottomSheet(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(32.dp))
-                        Text("9", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                        Icon(
+                            imageVector = if (currentStreak > 0) BoltIconFilled else BoltIconOutline,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = if (currentStreak > 0) Color(0xFFFFD700) else Color.Gray
+                        )
+                        Text(
+                            text = "$currentStreak",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (currentStreak > 0) Color.Black else Color.Gray
+                        )
                     }
                     Text("App Streak", color = Color.Gray)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Text("17 Best", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Icon(
+                            imageVector = if (bestStreak > 0) BoltIconFilled else BoltIconOutline,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = if (bestStreak > 0) Color(0xFFFFD700) else Color.Gray
+                        )
+                        Text(
+                            text = "$bestStreak Best",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (bestStreak > 0) Color.Black else Color.Gray
+                        )
                     }
                 }
 
@@ -382,22 +420,38 @@ fun StreakBottomSheet(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(32.dp))
-                        Text("0", fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(32.dp), tint = Color.Gray)
+                        Text("0", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                     }
-                    Text("Daily Refresh Streak", color = Color.Gray)
+                    Text("Daily Refresh Streak", color = Color.Gray, fontSize = 12.sp, textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Text("10 Best", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+                        Text("0 Best", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text("6 weeks in a row", fontWeight = FontWeight.Bold)
-            Text("11 days in the Katiba App this year", color = Color.Gray)
+            if (currentStreak > 0) {
+                Text(
+                    text = when {
+                        currentStreak == 1 -> "Just getting started!"
+                        currentStreak < 7 -> "${currentStreak} days in a row"
+                        currentStreak < 30 -> "${currentStreak / 7} ${if (currentStreak / 7 == 1) "week" else "weeks"} in a row"
+                        else -> "${currentStreak / 30} ${if (currentStreak / 30 == 1) "month" else "months"} in a row"
+                    },
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "$currentStreak ${if (currentStreak == 1) "day" else "days"} in the Katiba App",
+                    color = Color.Gray
+                )
+            } else {
+                Text("Start your streak today!", fontWeight = FontWeight.Bold)
+                Text("Open the app daily to build your habit", color = Color.Gray)
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
             

@@ -10,6 +10,19 @@ import kotlinx.serialization.modules.subclass
  * All destinations must be @Serializable for state preservation
  */
 
+// Onboarding & Auth destinations
+@Serializable
+data object OnboardingRoute : NavKey
+
+@Serializable
+data object LoginRoute : NavKey
+
+@Serializable
+data object SignUpRoute : NavKey
+
+@Serializable
+data object ForgotPasswordRoute : NavKey
+
 // Main bottom navigation destinations
 @Serializable
 data object HomeRoute : NavKey
@@ -72,6 +85,10 @@ data object MzalendoRoute : NavKey
  */
 val navKeySerializersModule = SerializersModule {
     polymorphic(NavKey::class) {
+        subclass(OnboardingRoute::class, OnboardingRoute.serializer())
+        subclass(LoginRoute::class, LoginRoute.serializer())
+        subclass(SignUpRoute::class, SignUpRoute.serializer())
+        subclass(ForgotPasswordRoute::class, ForgotPasswordRoute.serializer())
         subclass(HomeRoute::class, HomeRoute.serializer())
         subclass(ConstitutionRoute::class, ConstitutionRoute.serializer())
         subclass(PlansRoute::class, PlansRoute.serializer())

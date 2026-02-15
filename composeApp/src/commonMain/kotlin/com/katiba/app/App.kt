@@ -9,6 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.katiba.app.data.repository.ConstitutionRepository
+import com.katiba.app.ui.auth.ForgotPasswordScreen
+import com.katiba.app.ui.auth.LoginScreen
+import com.katiba.app.ui.auth.SignUpScreen
 import com.katiba.app.ui.constitution.ClauseGridScreen
 import com.katiba.app.ui.constitution.ConstitutionScreen
 import com.katiba.app.ui.constitution.PreambleScreen
@@ -17,6 +20,7 @@ import com.katiba.app.ui.constitution.SchedulesScreen
 import com.katiba.app.ui.constitution.ScheduleDetailScreen
 import com.katiba.app.ui.home.*
 import com.katiba.app.ui.navigation.*
+import com.katiba.app.ui.onboarding.OnboardingScreen
 import com.katiba.app.ui.plans.LessonScreen
 import com.katiba.app.ui.plans.PlansScreen
 import com.katiba.app.ui.profile.ProfileScreen
@@ -68,14 +72,20 @@ fun App() {
 @Composable
 private fun AppContent() {
         // Navigation 3 Style: You own the backstack as a mutable list
-        val backStack = rememberNavBackStack(HomeRoute)
+        val backStack = rememberNavBackStack(OnboardingRoute)
 
         // Helper to get current route from backstack
         val currentKey = backStack.lastOrNull()
 
         // Handle system back button/swipe navigation
-        BackHandler(enabled = backStack.size > 1) {
-            backStack.removeLast()
+        BackHandler(enabled = backStack.size >= 1) {
+            if (backStack.size <= 1) {
+                // On the last screen — navigate to Home instead of exiting
+                backStack.clear()
+                backStack.add(HomeRoute)
+            } else {
+                backStack.removeLast()
+            }
         }
 
         // Determine current tab based on the current key
@@ -108,8 +118,15 @@ private fun AppContent() {
             currentKey is HomeRoute ||
             currentKey is ConstitutionRoute ||
             currentKey is PlansRoute ||
-            currentKey is ProfileRoute ||
-            currentKey is MzalendoRoute
+            currentKey is ProfileRoute
+        }
+
+        // Check if we're on an auth/onboarding screen (no back navigation to these after login)
+        val isAuthScreen = remember(currentKey) {
+            currentKey is OnboardingRoute ||
+            currentKey is LoginRoute ||
+            currentKey is SignUpRoute ||
+            currentKey is ForgotPasswordRoute
         }
 
         Scaffold(
@@ -143,6 +160,57 @@ private fun AppContent() {
                     rememberSavedStateNavEntryDecorator()
                 ),
                 entryProvider = entryProvider {
+                    // Onboarding
+                    entry<OnboardingRoute> {
+                        OnboardingScreen(
+                            onGetStarted = {
+                                backStack.add(LoginRoute)
+                            }
+                        )
+                    }
+
+                    // Auth screens
+                    entry<LoginRoute> {
+                        LoginScreen(
+                            onLoginSuccess = {
+                                // Clear backstack and go to Home
+                                backStack.clear()
+                                backStack.add(HomeRoute)
+                            },
+                            onNavigateToSignUp = {
+                                backStack.add(SignUpRoute)
+                            },
+                            onNavigateToForgotPassword = {
+                                backStack.add(ForgotPasswordRoute)
+                            }
+                        )
+                    }
+
+                    entry<ForgotPasswordRoute> {
+                        ForgotPasswordScreen(
+                            onBackToLogin = {
+                                backStack.removeLast()
+                            },
+                            onPasswordResetSuccess = {
+                                // Navigate back to login after successful password reset
+                                backStack.removeLast()
+                            }
+                        )
+                    }
+
+                    entry<SignUpRoute> {
+                        SignUpScreen(
+                            onSignUpSuccess = {
+                                // Clear backstack and go to Home
+                                backStack.clear()
+                                backStack.add(HomeRoute)
+                            },
+                            onNavigateToLogin = {
+                                backStack.removeLast()
+                            }
+                        )
+                    }
+
                     // Home Tab
                     entry<HomeRoute> {
                         HomeScreen(
