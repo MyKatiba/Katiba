@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
+import com.katiba.app.data.api.AuthApiClient
 import com.katiba.app.ui.theme.KatibaColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -62,6 +63,8 @@ fun ForgotPasswordScreen(
 ) {
     var currentStep by remember { mutableStateOf(ForgotPasswordStep.EMAIL_ENTRY) }
     var email by remember { mutableStateOf("") }
+    var userId by remember { mutableStateOf("") }
+    var resetToken by remember { mutableStateOf("") }
     var otp by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -71,6 +74,7 @@ fun ForgotPasswordScreen(
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     
     val coroutineScope = rememberCoroutineScope()
+    val authApiClient = remember { AuthApiClient() }
 
     Column(
         modifier = Modifier
@@ -185,10 +189,15 @@ fun ForgotPasswordScreen(
                             errorMessage = null
                             
                             coroutineScope.launch {
-                                // TODO: Call API to send OTP
-                                delay(1500) // Simulate network call
+                                val result = authApiClient.forgotPassword(email)
                                 isLoading = false
-                                currentStep = ForgotPasswordStep.OTP_VERIFICATION
+                                
+                                result.onSuccess { response ->
+                                    userId = response.userId
+                                    currentStep = ForgotPasswordStep.OTP_VERIFICATION
+                                }.onFailure { error ->
+                                    errorMessage = error.message ?: "Failed to send OTP"
+                                }
                             }
                         },
                         onBackToLogin = onBackToLogin
@@ -217,11 +226,15 @@ fun ForgotPasswordScreen(
                             errorMessage = null
                             
                             coroutineScope.launch {
-                                // TODO: Call API to verify OTP
-                                delay(1500) // Simulate network call
+                                val result = authApiClient.verifyResetOtp(userId, otp)
                                 isLoading = false
-                                // Mock verification success
-                                currentStep = ForgotPasswordStep.NEW_PASSWORD
+                                
+                                result.onSuccess { response ->
+                                    resetToken = response.resetToken
+                                    currentStep = ForgotPasswordStep.NEW_PASSWORD
+                                }.onFailure { error ->
+                                    errorMessage = error.message ?: "Invalid or expired OTP"
+                                }
                             }
                         },
                         onResendOTP = {
@@ -229,15 +242,17 @@ fun ForgotPasswordScreen(
                             errorMessage = null
                             
                             coroutineScope.launch {
-                                // TODO: Call API to resend OTP
-                                delay(1500)
+                                val result = authApiClient.resendOtp(userId, "password_reset")
                                 isLoading = false
-                                errorMessage = "OTP resent successfully"
+                                
+                                result.onSuccess {
+                                    errorMessage = "OTP resent successfully"
+                                }.onFailure { error ->
+                                    errorMessage = error.message ?: "Failed to resend OTP"
+                                }
                             }
                         },
-                        onBack = {
-                            currentStep = ForgotPasswordStep.EMAIL_ENTRY
-                        }
+                        onBackToLogin = onBackToLogin
                     )
                 }
 
@@ -276,10 +291,14 @@ fun ForgotPasswordScreen(
                             errorMessage = null
                             
                             coroutineScope.launch {
-                                // TODO: Call API to reset password
-                                delay(1500) // Simulate network call
+                                val result = authApiClient.resetPassword(resetToken, newPassword)
                                 isLoading = false
-                                onPasswordResetSuccess()
+                                
+                                result.onSuccess {
+                                    onPasswordResetSuccess()
+                                }.onFailure { error ->
+                                    errorMessage = error.message ?: "Failed to reset password"
+                                }
                             }
                         },
                         onBack = {

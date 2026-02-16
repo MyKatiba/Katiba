@@ -85,6 +85,35 @@ fun SettingsScreen(
                 }
             }
             
+            // Civic Information section
+            item {
+                var isRegisteredVoter by remember { mutableStateOf(false) }
+                var isLoading by remember { mutableStateOf(false) }
+                
+                SettingsSection(title = "Civic Information") {
+                    SettingsItem(
+                        icon = "🆔",
+                        title = "National ID",
+                        subtitle = "Update your national ID number"
+                    )
+                    HorizontalDivider()
+                    SettingsToggleItem(
+                        icon = "🗳️",
+                        title = "Registered Voter",
+                        subtitle = if (isRegisteredVoter) "You are registered to vote" else "Not registered to vote",
+                        checked = isRegisteredVoter,
+                        enabled = !isLoading,
+                        onCheckedChange = { checked ->
+                            isRegisteredVoter = checked
+                            // TODO: Call API to update voter status
+                            // isLoading = true
+                            // userApiClient.updateProfile(isRegisteredVoter = checked)
+                            // isLoading = false
+                        }
+                    )
+                }
+            }
+            
             // Notifications section
             item {
                 SettingsSection(title = "Notifications") {
@@ -304,7 +333,8 @@ private fun SettingsToggleItem(
     title: String,
     subtitle: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
 ) {
     Row(
         modifier = Modifier
@@ -322,18 +352,20 @@ private fun SettingsToggleItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium
+                fontWeight = FontWeight.Medium,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else Color.Gray
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else Color.Gray.copy(alpha = 0.6f)
             )
         }
         
         Switch(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            enabled = enabled,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = KatibaColors.KenyaWhite,
                 checkedTrackColor = KatibaColors.KenyaGreen

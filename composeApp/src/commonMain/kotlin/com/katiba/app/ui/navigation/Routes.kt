@@ -23,6 +23,19 @@ data object SignUpRoute : NavKey
 @Serializable
 data object ForgotPasswordRoute : NavKey
 
+@Serializable
+data class OTPVerificationRoute(
+    val userId: String,
+    val email: String,
+    val purpose: String // "email_verification" or "password_reset"
+) : NavKey
+
+@Serializable
+data object CivicDataInputRoute : NavKey
+
+@Serializable
+data class ResetPasswordRoute(val resetToken: String) : NavKey
+
 // Main bottom navigation destinations
 @Serializable
 data object HomeRoute : NavKey
@@ -89,6 +102,9 @@ val navKeySerializersModule = SerializersModule {
         subclass(LoginRoute::class, LoginRoute.serializer())
         subclass(SignUpRoute::class, SignUpRoute.serializer())
         subclass(ForgotPasswordRoute::class, ForgotPasswordRoute.serializer())
+        subclass(OTPVerificationRoute::class, OTPVerificationRoute.serializer())
+        subclass(CivicDataInputRoute::class, CivicDataInputRoute.serializer())
+        subclass(ResetPasswordRoute::class, ResetPasswordRoute.serializer())
         subclass(HomeRoute::class, HomeRoute.serializer())
         subclass(ConstitutionRoute::class, ConstitutionRoute.serializer())
         subclass(PlansRoute::class, PlansRoute.serializer())

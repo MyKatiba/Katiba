@@ -9,8 +9,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.katiba.app.data.repository.ConstitutionRepository
+import com.katiba.app.ui.auth.CivicDataInputScreen
 import com.katiba.app.ui.auth.ForgotPasswordScreen
 import com.katiba.app.ui.auth.LoginScreen
+import com.katiba.app.ui.auth.OTPVerificationScreen
+import com.katiba.app.ui.auth.ResetPasswordScreen
 import com.katiba.app.ui.auth.SignUpScreen
 import com.katiba.app.ui.constitution.ClauseGridScreen
 import com.katiba.app.ui.constitution.ConstitutionScreen
@@ -126,7 +129,10 @@ private fun AppContent() {
             currentKey is OnboardingRoute ||
             currentKey is LoginRoute ||
             currentKey is SignUpRoute ||
-            currentKey is ForgotPasswordRoute
+            currentKey is ForgotPasswordRoute ||
+            currentKey is OTPVerificationRoute ||
+            currentKey is CivicDataInputRoute ||
+            currentKey is ResetPasswordRoute
         }
 
         Scaffold(
@@ -200,12 +206,65 @@ private fun AppContent() {
 
                     entry<SignUpRoute> {
                         SignUpScreen(
-                            onSignUpSuccess = {
+                            onSignUpSuccess = { userId, email ->
+                                // Navigate to OTP verification
+                                backStack.add(OTPVerificationRoute(userId, email, "email_verification"))
+                            },
+                            onNavigateToLogin = {
+                                backStack.removeLast()
+                            }
+                        )
+                    }
+                    
+                    entry<OTPVerificationRoute> { key ->
+                        OTPVerificationScreen(
+                            userId = key.userId,
+                            email = key.email,
+                            purpose = key.purpose,
+                            onVerificationSuccess = { resetToken ->
+                                if (key.purpose == "email_verification") {
+                                    // Go to civic data input after email verification
+                                    backStack.add(CivicDataInputRoute)
+                                } else {
+                                    // Go to reset password after password reset OTP
+                                    backStack.add(ResetPasswordRoute(resetToken!!))
+                                }
+                            },
+                            onBackClick = {
+                                backStack.removeLast()
+                            }
+                        )
+                    }
+                    
+                    entry<CivicDataInputRoute> {
+                        CivicDataInputScreen(
+                            onComplete = {
                                 // Clear backstack and go to Home
                                 backStack.clear()
                                 backStack.add(HomeRoute)
                             },
-                            onNavigateToLogin = {
+                            onSkip = {
+                                // Skip civic data and go to Home
+                                backStack.clear()
+                                backStack.add(HomeRoute)
+                            }
+                        )
+                    }
+                    
+                    entry<ResetPasswordRoute> { key ->
+                        ResetPasswordScreen(
+                            resetToken = key.resetToken,
+                            onResetSuccess = {
+                                // Navigate back to login
+                                // Clear auth flow stack
+                                while (backStack.size > 1 && backStack.lastOrNull() !is LoginRoute) {
+                                    backStack.removeLast()
+                                }
+                                if (backStack.lastOrNull() !is LoginRoute) {
+                                    backStack.add(LoginRoute)
+                                }
+                            },
+                            onBackClick = {
                                 backStack.removeLast()
                             }
                         )

@@ -112,9 +112,12 @@ data class UserProfile(
     val name: String,
     val email: String,
     val avatarUrl: String = "",
+    val emailVerified: Boolean = false,
+    val nationalId: String = "",
     val county: String = "",
     val constituency: String = "",
     val ward: String = "",
+    val isRegisteredVoter: Boolean = false,
     val joinedDate: String,
     val streak: Int = 0,
     val longestStreak: Int = 0,
@@ -183,3 +186,136 @@ enum class ActivityType {
     CHAPTER_COMPLETED,
     DAILY_CLAUSE_READ
 }
+
+// API Request/Response models
+
+/**
+ * Register request
+ */
+@Serializable
+data class RegisterRequest(
+    val name: String,
+    val email: String,
+    val password: String,
+    val confirm_password: String
+)
+
+/**
+ * Register response
+ */
+@Serializable
+data class RegisterResponse(
+    val userId: String,
+    val message: String
+)
+
+/**
+ * Verify OTP request (for email verification and password reset)
+ */
+@Serializable
+data class VerifyOtpRequest(
+    val userId: String,
+    val otp: String
+)
+
+/**
+ * Email verification response
+ */
+@Serializable
+data class VerifyEmailResponse(
+    val user: UserProfile,
+    val accessToken: String,
+    val refreshToken: String
+)
+
+/**
+ * Resend OTP request
+ */
+@Serializable
+data class ResendOtpRequest(
+    val userId: String,
+    val purpose: String // "email_verification" or "password_reset"
+)
+
+/**
+ * Forgot password request
+ */
+@Serializable
+data class ForgotPasswordRequest(
+    val email: String
+)
+
+/**
+ * Forgot password response
+ */
+@Serializable
+data class ForgotPasswordResponse(
+    val userId: String,
+    val message: String
+)
+
+/**
+ * Verify reset OTP response
+ */
+@Serializable
+data class VerifyResetOtpResponse(
+    val resetToken: String
+)
+
+/**
+ * Reset password request
+ */
+@Serializable
+data class ResetPasswordRequest(
+    val token: String,
+    val password: String
+)
+
+/**
+ * Login request
+ */
+@Serializable
+data class LoginRequest(
+    val email: String,
+    val password: String
+)
+
+/**
+ * Login response
+ */
+@Serializable
+data class LoginResponse(
+    val user: UserProfile,
+    val accessToken: String,
+    val refreshToken: String
+)
+
+/**
+ * Generic message response
+ */
+@Serializable
+data class MessageResponse(
+    val message: String
+)
+
+/**
+ * Update profile request
+ */
+@Serializable
+data class UpdateProfileRequest(
+    val name: String? = null,
+    val county: String? = null,
+    val constituency: String? = null,
+    val ward: String? = null,
+    val nationalId: String? = null,
+    val isRegisteredVoter: Boolean? = null
+)
+
+/**
+ * API error response
+ */
+@Serializable
+data class ApiErrorResponse(
+    val error: String,
+    val message: String? = null
+)

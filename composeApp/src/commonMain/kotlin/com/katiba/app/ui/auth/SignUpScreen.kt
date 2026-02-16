@@ -19,6 +19,49 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.katiba.app.data.api.AuthApiClient
+import com.katiba.app.ui.theme.KatibaColors
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,7 +93,7 @@ import com.katiba.app.ui.theme.KatibaColors
 
 @Composable
 fun SignUpScreen(
-    onSignUpSuccess: () -> Unit,
+    onSignUpSuccess: (String, String) -> Unit, // (userId, email)
     onNavigateToLogin: () -> Unit,
     onGoogleSignUp: () -> Unit = { println("TODO: Google sign-up tapped") }
 ) {
@@ -60,6 +103,10 @@ fun SignUpScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    val authApiClient = remember { AuthApiClient() }
 
     Column(
         modifier = Modifier
@@ -215,25 +262,76 @@ fun SignUpScreen(
             )
 
             Spacer(modifier = Modifier.height(28.dp))
+            
+            // Error message
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Sign up button
             Button(
-                onClick = onSignUpSuccess,
+                onClick = {
+                    when {
+                        fullName.isBlank() -> errorMessage = "Please enter your full name"
+                        email.isBlank() -> errorMessage = "Please enter your email"
+                        password.isBlank() -> errorMessage = "Please enter a password"
+                        confirmPassword.isBlank() -> errorMessage = "Please confirm your password"
+                        password != confirmPassword -> errorMessage = "Passwords do not match"
+                        password.length < 6 -> errorMessage = "Password must be at least 6 characters"
+                        !email.contains("@") -> errorMessage = "Please enter a valid email"
+                        else -> {
+                            coroutineScope.launch {
+                                isLoading = true
+                                errorMessage = null
+                                
+                                val result = authApiClient.register(
+                                    name = fullName,
+                                    email = email,
+                                    password = password,
+                                    confirmPassword = confirmPassword
+                                )
+                                
+                                isLoading = false
+                                
+                                result.onSuccess { response ->
+                                    onSignUpSuccess(response.userId, email)
+                                }.onFailure { error ->
+                                    errorMessage = error.message ?: "Registration failed"
+                                }
+                            }
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                enabled = !isLoading,
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = KatibaColors.KenyaGreen,
                     contentColor = Color.White
                 )
             ) {
-                Text(
-                    text = "Sign Up",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White
+                    )
+                } else {
+                    Text(
+                        text = "Sign Up",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

@@ -15,6 +15,21 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +61,7 @@ fun ProfileScreen(
 ) {
     val userProfile = remember { SampleDataRepository.getUserProfile() }
     val lessons = remember { SampleDataRepository.getLessons() }
+    var showCivicDataSheet by remember { mutableStateOf(false) }
 
     // Calculate current course progress
     val currentChapter = 4 // Bill of Rights
@@ -147,8 +163,19 @@ fun ProfileScreen(
             )
 
             // My Civic Data Section
-            CivicDataCard(userProfile = userProfile)
+            CivicDataCard(
+                userProfile = userProfile,
+                onClick = { showCivicDataSheet = true }
+            )
         }
+    }
+    
+    // Civic Data Bottom Sheet
+    if (showCivicDataSheet) {
+        CivicDataBottomSheet(
+            userProfile = userProfile,
+            onDismiss = { showCivicDataSheet = false }
+        )
     }
 }
 
@@ -708,10 +735,14 @@ private fun CurrentCourseCard(
 }
 
 @Composable
-private fun CivicDataCard(userProfile: UserProfile) {
+private fun CivicDataCard(
+    userProfile: UserProfile,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .shadow(
                 elevation = 8.dp,
                 shape = RoundedCornerShape(24.dp),
@@ -725,30 +756,44 @@ private fun CivicDataCard(userProfile: UserProfile) {
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            Text(
-                text = "My Civic Data",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = KatibaColors.KenyaBlack
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "My Civic Data",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = KatibaColors.KenyaBlack
+                )
+                
+                // Arrow indicator
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "View details",
+                    tint = KatibaColors.KenyaGreen,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             CivicDataRow(
                 label = "County",
-                value = "Nairobi City (047)",
+                value = userProfile.county.ifEmpty { "Not set" },
                 showDivider = true
             )
 
             CivicDataRow(
                 label = "Constituency",
-                value = "Westlands",
+                value = userProfile.constituency.ifEmpty { "Not set" },
                 showDivider = true
             )
 
             CivicDataRow(
                 label = "Ward",
-                value = "Kitisuru",
+                value = userProfile.ward.ifEmpty { "Not set" },
                 showDivider = false
             )
         }
@@ -783,6 +828,191 @@ private fun CivicDataRow(
 
         if (showDivider) {
             HorizontalDivider(color = Color(0xFFF3F4F6))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CivicDataBottomSheet(
+    userProfile: UserProfile,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Color.White,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "My Civic Information",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = KatibaColors.KenyaBlack
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // National ID
+            DetailRow(
+                icon = "🆔",
+                label = "National ID",
+                value = userProfile.nationalId.ifEmpty { "Not set" }
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // County
+            DetailRow(
+                icon = "🏛️",
+                label = "County",
+                value = userProfile.county.ifEmpty { "Not set" }
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Constituency
+            DetailRow(
+                icon = "📍",
+                label = "Constituency",
+                value = userProfile.constituency.ifEmpty { "Not set" }
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Ward
+            DetailRow(
+                icon = "🗺️",
+                label = "Ward",
+                value = userProfile.ward.ifEmpty { "Not set" }
+            )
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Voter Status Badge
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (userProfile.isRegisteredVoter) {
+                        KatibaColors.KenyaGreen.copy(alpha = 0.1f)
+                    } else {
+                        Color(0xFFF3F4F6)
+                    }
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "🗳️",
+                            fontSize = 24.sp
+                        )
+                        Column {
+                            Text(
+                                text = "Voter Registration Status",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Gray,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = if (userProfile.isRegisteredVoter) "Registered Voter" else "Not Registered",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = if (userProfile.isRegisteredVoter) KatibaColors.KenyaGreen else Color.Gray
+                            )
+                        }
+                    }
+                    
+                    if (userProfile.isRegisteredVoter) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(KatibaColors.KenyaGreen),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "✓",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
+                        }
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Close button
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = KatibaColors.KenyaGreen
+                )
+            ) {
+                Text(
+                    text = "Close",
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(
+    icon: String,
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = icon,
+            fontSize = 24.sp
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.Gray,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = KatibaColors.KenyaBlack
+            )
         }
     }
 }
