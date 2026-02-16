@@ -43,9 +43,7 @@ class UserApiClient {
      */
     suspend fun getProfile(): Result<UserProfile> = try {
         val token = TokenManager.getAccessToken()
-        if (token == null) {
-            return Result.failure(Exception("Not authenticated"))
-        }
+            ?: return@try Result.failure(Exception("Not authenticated"))
         
         val response = client.get("/api/users/me") {
             header(HttpHeaders.Authorization, "Bearer $token")
@@ -77,9 +75,7 @@ class UserApiClient {
         isRegisteredVoter: Boolean? = null
     ): Result<UserProfile> = try {
         val token = TokenManager.getAccessToken()
-        if (token == null) {
-            return Result.failure(Exception("Not authenticated"))
-        }
+            ?: return@try Result.failure(Exception("Not authenticated"))
         
         val response = client.put("/api/users/me") {
             header(HttpHeaders.Authorization, "Bearer $token")

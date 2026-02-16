@@ -252,7 +252,7 @@ fun ForgotPasswordScreen(
                                 }
                             }
                         },
-                        onBackToLogin = onBackToLogin
+                        onBack = onBackToLogin
                     )
                 }
 
