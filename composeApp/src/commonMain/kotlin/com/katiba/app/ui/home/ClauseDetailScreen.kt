@@ -2,6 +2,7 @@ package com.katiba.app.ui.home
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,8 +17,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -25,6 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.katiba.app.data.repository.SampleDataRepository
 import com.katiba.app.ui.theme.KatibaColors
+import katiba.composeapp.generated.resources.Res
+import katiba.composeapp.generated.resources.kenya_shield
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Story-style progress indicators at the top
@@ -93,6 +100,19 @@ fun ClauseDetailScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
+        // Kenya shield watermark in bottom right, tilted 45 degrees
+        Image(
+            painter = painterResource(Res.drawable.kenya_shield),
+            contentDescription = null,
+            modifier = Modifier
+                .size(150.dp)
+                .align(Alignment.BottomEnd)
+                .offset(x = 20.dp, y = 20.dp)
+                .rotate(-45f)
+                .alpha(0.08f),
+            contentScale = ContentScale.Fit
+        )
+
         Column(
             modifier = Modifier.fillMaxSize()
         ) {

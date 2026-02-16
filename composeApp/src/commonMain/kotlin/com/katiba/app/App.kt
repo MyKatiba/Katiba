@@ -117,6 +117,7 @@ private fun AppContent() {
         }
 
         // Determine if bottom bar should be shown
+        // ClauseDetailRoute and other detail screens don't show the bottom bar
         val showBottomBar = remember(currentKey) {
             currentKey is HomeRoute ||
             currentKey is ConstitutionRoute ||
@@ -377,13 +378,13 @@ private fun AppContent() {
                         )
                     }
 
-                    entry<ReadingRoute> { key ->
-                        ReadingScreen(
-                            chapterNumber = key.chapterNumber,
-                            articleNumber = key.articleNumber,
+                    entry<LessonRoute> { key ->
+                        LessonScreen(
+                            lessonId = key.lessonId,
                             onBackClick = { backStack.removeLast() },
-                            onNavigateToArticle = { chapter, article ->
-                                backStack.add(ReadingRoute(chapter, article))
+                            onCompleteLesson = {
+                                // Return to plans after completion
+                                backStack.removeLast()
                             }
                         )
                     }

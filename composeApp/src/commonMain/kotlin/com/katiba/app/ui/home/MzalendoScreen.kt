@@ -218,6 +218,7 @@ fun MzalendoScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
             },
+            containerColor = Color.White, // Consistent white background
             modifier = modifier.fillMaxSize()
         ) { paddingValues ->
             if (showWelcomeScreen && messages.isEmpty()) {
@@ -766,7 +767,7 @@ private fun LoadingIndicator() {
     }
 }
 
-// ─── Chat input (redesigned: Gemini-style bottom bar) ────────────────────────
+// ─── Chat input (redesigned: seamless white bottom bar) ──────────────────────
 
 @Composable
 private fun KatibaAIChatInput(
@@ -777,28 +778,20 @@ private fun KatibaAIChatInput(
     isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val topBorderColor = Color(0xFFE0E0E0)
-
+    // Seamless white background that extends all the way to the bottom
     Surface(
-        modifier = modifier
-            .drawBehind {
-                // Subtle grey shadow line on top border
-                drawLine(
-                    color = topBorderColor,
-                    start = Offset(0f, 0f),
-                    end = Offset(size.width, 0f),
-                    strokeWidth = 1.dp.toPx()
-                )
-            },
-        color = MaterialTheme.colorScheme.surface,
+        modifier = modifier,
+        color = Color.White,
         shadowElevation = 0.dp,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        shape = RectangleShape // No rounded corners - seamless blend
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(Color.White) // Ensure consistent white background
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(horizontal = 20.dp)
+                .padding(top = 12.dp, bottom = 8.dp)
         ) {
             // Text field row
             Row(
@@ -817,14 +810,14 @@ private fun KatibaAIChatInput(
                         Text(
                             text = "Ask Mzalendo...",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            color = Color.Gray.copy(alpha = 0.5f)
                         )
                     }
                     androidx.compose.foundation.text.BasicTextField(
                         value = value,
                         onValueChange = onValueChange,
                         textStyle = MaterialTheme.typography.bodyLarge.copy(
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = Color.Black
                         ),
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),

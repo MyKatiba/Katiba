@@ -12,8 +12,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -34,9 +37,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -45,6 +54,7 @@ import androidx.compose.ui.unit.sp
 import com.katiba.app.data.model.Badge
 import com.katiba.app.data.model.UserProfile
 import com.katiba.app.data.repository.SampleDataRepository
+import com.katiba.app.data.repository.StreakManager
 import com.katiba.app.ui.theme.KatibaColors
 import katiba.composeapp.generated.resources.Res
 import katiba.composeapp.generated.resources.bracelet
@@ -62,6 +72,16 @@ fun ProfileScreen(
     val userProfile = remember { SampleDataRepository.getUserProfile() }
     val lessons = remember { SampleDataRepository.getLessons() }
     var showCivicDataSheet by remember { mutableStateOf(false) }
+    var showStreakSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+
+    // Initialize streak on first composition
+    var streakCount by remember { mutableStateOf(0) }
+    var bestStreak by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        streakCount = StreakManager.checkAndUpdateStreak()
+        bestStreak = StreakManager.getBestStreak()
+    }
 
     // Calculate current course progress
     val currentChapter = 4 // Bill of Rights
@@ -77,15 +97,22 @@ fun ProfileScreen(
             .fillMaxSize()
             .background(KatibaColors.Background)
     ) {
-        // Top bar with beadwork border
+        // Top bar with gray bottom border and shadow
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(KatibaColors.Background)
+                .shadow(elevation = 2.dp)
+                .drawBehind {
+                    // Gray bottom border
+                    drawLine(
+                        color = Color(0xFFE0E0E0),
+                        start = Offset(0f, size.height),
+                        end = Offset(size.width, size.height),
+                        strokeWidth = 1.dp.toPx()
+                    )
+                }
         ) {
-            // Beadwork border
-            BeadworkBorder()
-
             // Header
             Row(
                 modifier = Modifier
@@ -132,12 +159,9 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                StatCard(
-                    icon = "🔥",
-                    iconBackgroundColor = Color(0xFFFED7AA), // Orange light
-                    value = userProfile.streak.toString(),
-                    label = "DAY STREAK",
-                    borderColor = KatibaColors.KenyaRed,
+                StreakStatCard(
+                    streakCount = streakCount,
+                    onClick = { showStreakSheet = true },
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
@@ -175,6 +199,16 @@ fun ProfileScreen(
         CivicDataBottomSheet(
             userProfile = userProfile,
             onDismiss = { showCivicDataSheet = false }
+        )
+    }
+
+    // Streak Bottom Sheet
+    if (showStreakSheet) {
+        StreakBottomSheet(
+            sheetState = sheetState,
+            onDismiss = { showStreakSheet = false },
+            currentStreak = streakCount,
+            bestStreak = bestStreak
         )
     }
 }
@@ -220,11 +254,11 @@ private fun ProfileCard(userProfile: UserProfile) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Bracelet header image
+            // Bracelet header image (top third only - reduced to 70dp)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(100.dp)
+                    .height(70.dp)
                     .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
             ) {
                 Image(
@@ -233,114 +267,147 @@ private fun ProfileCard(userProfile: UserProfile) {
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                // Subtle gradient overlay for better avatar visibility
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.White.copy(alpha = 0.3f)
-                                ),
-                                startY = 0f,
-                                endY = Float.POSITIVE_INFINITY
-                            )
-                        )
-                )
             }
 
-            // Avatar overlapping the header
+            // Abstract green design section (bottom two thirds)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset(y = (-48).dp),
-                contentAlignment = Alignment.Center
+                    .height(140.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF2E7D32), // Darker green
+                                Color(0xFF388E3C), // Medium green
+                                Color(0xFF43A047)  // Lighter green
+                            )
+                        )
+                    )
+                    .drawBehind {
+                        // Draw abstract circles like in the reference image
+                        // Large semi-transparent circle on the right
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.08f),
+                            radius = 120.dp.toPx(),
+                            center = Offset(size.width * 0.9f, size.height * 0.8f)
+                        )
+                        // Medium circle
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.06f),
+                            radius = 80.dp.toPx(),
+                            center = Offset(size.width * 0.75f, size.height * 0.4f)
+                        )
+                        // Small circle
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.05f),
+                            radius = 50.dp.toPx(),
+                            center = Offset(size.width * 0.1f, size.height * 0.7f)
+                        )
+                        // Another small decorative circle
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.04f),
+                            radius = 35.dp.toPx(),
+                            center = Offset(size.width * 0.3f, size.height * 0.2f)
+                        )
+                    }
             ) {
-                // Avatar with edit button
-                Box {
-                    Box(
-                        modifier = Modifier
-                            .size(96.dp)
-                            .clip(CircleShape)
-                            .border(4.dp, Color.White, CircleShape)
-                            .shadow(8.dp, CircleShape)
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color(0xFFE8D5B7),
-                                        Color(0xFFD4A574)
+                // Avatar overlapping - positioned in the center of this section
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .offset(y = (-60).dp),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    // Avatar with edit button
+                    Box {
+                        Box(
+                            modifier = Modifier
+                                .size(96.dp)
+                                .clip(CircleShape)
+                                .border(4.dp, Color.White, CircleShape)
+                                .shadow(8.dp, CircleShape)
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color(0xFFE8D5B7),
+                                            Color(0xFFD4A574)
+                                        )
                                     )
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // Placeholder avatar - shows initials
-                        Text(
-                            text = userProfile.name.split(" ")
-                                .mapNotNull { it.firstOrNull()?.toString() }
-                                .take(2)
-                                .joinToString(""),
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF8B4513)
-                        )
-                    }
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            // Placeholder avatar - shows initials
+                            Text(
+                                text = userProfile.name.split(" ")
+                                    .mapNotNull { it.firstOrNull()?.toString() }
+                                    .take(2)
+                                    .joinToString(""),
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF8B4513)
+                            )
+                        }
 
-                    // Edit button
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .align(Alignment.BottomEnd)
-                            .offset(x = 4.dp, y = 4.dp)
-                            .clip(CircleShape)
-                            .background(KatibaColors.KenyaRed)
-                            .border(2.dp, Color.White, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit Profile",
-                            tint = Color.White,
-                            modifier = Modifier.size(14.dp)
-                        )
+                        // Edit button
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .align(Alignment.BottomEnd)
+                                .offset(x = 4.dp, y = 4.dp)
+                                .clip(CircleShape)
+                                .background(KatibaColors.KenyaRed)
+                                .border(2.dp, Color.White, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit Profile",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
                     }
+                }
+
+                // Content below avatar inside the green area
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 50.dp)
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Name
+                    Text(
+                        text = "Wanjiku Kamau",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
+                    // Member since
+                    Text(
+                        text = "Citizen since 2023",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.Medium
+                    )
                 }
             }
 
-            // Content below avatar (adjusted for avatar overlap)
+            // Tags row (below the green section)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset(y = (-32).dp)
                     .padding(horizontal = 24.dp)
-                    .padding(bottom = 24.dp),
+                    .padding(vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Name
-                Text(
-                    text = "Wanjiku Kamau",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = KatibaColors.KenyaBlack
-                )
-
-                // Member since
-                Text(
-                    text = "Citizen since 2023",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Medium
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Tags row
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
-                    // Location tag
+                    // Location tag - with fixed height
                     ProfileTag(
                         icon = {
                             Icon(
@@ -350,10 +417,11 @@ private fun ProfileCard(userProfile: UserProfile) {
                                 modifier = Modifier.size(14.dp)
                             )
                         },
-                        text = "Nairobi, Kenya"
+                        text = "Nairobi, Kenya",
+                        modifier = Modifier.height(32.dp)
                     )
 
-                    // Verified tag
+                    // Verified tag - with fixed height
                     ProfileTag(
                         icon = {
                             Text(
@@ -363,7 +431,8 @@ private fun ProfileCard(userProfile: UserProfile) {
                                 fontWeight = FontWeight.Bold
                             )
                         },
-                        text = "Verified Voter"
+                        text = "Verified Voter",
+                        modifier = Modifier.height(32.dp)
                     )
                 }
             }
@@ -374,11 +443,13 @@ private fun ProfileCard(userProfile: UserProfile) {
 @Composable
 private fun ProfileTag(
     icon: @Composable () -> Unit,
-    text: String
+    text: String,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         shape = RoundedCornerShape(50),
-        color = Color(0xFFF3F4F6)
+        color = Color(0xFFF3F4F6),
+        modifier = modifier
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
@@ -468,6 +539,284 @@ private fun StatCard(
         }
     }
 }
+
+@Composable
+private fun StreakStatCard(
+    streakCount: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(16.dp),
+                spotColor = Color.Black.copy(alpha = 0.05f)
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Left border accent
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(KatibaColors.KenyaRed)
+                    .align(Alignment.CenterStart)
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                // Icon - Bolt icon like in homepage
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFFED7AA)), // Orange light
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (streakCount > 0) BoltIconFilled else BoltIconOutline,
+                        contentDescription = "Streak",
+                        tint = if (streakCount > 0) Color(0xFFFFD700) else Color.Gray,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Value
+                Text(
+                    text = streakCount.toString(),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = KatibaColors.KenyaBlack
+                )
+
+                // Label
+                Text(
+                    text = "DAY STREAK",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Gray,
+                    letterSpacing = 1.sp
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun StreakBottomSheet(
+    sheetState: SheetState,
+    onDismiss: () -> Unit,
+    currentStreak: Int,
+    bestStreak: Int
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        containerColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(onClick = {}) {
+                    Icon(Icons.Default.Info, contentDescription = null)
+                }
+                IconButton(onClick = {}) {
+                    Icon(Icons.Default.Share, contentDescription = null)
+                }
+            }
+
+            Text(
+                text = "Streaks help you build your daily Katiba habit.",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (currentStreak > 0) BoltIconFilled else BoltIconOutline,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = if (currentStreak > 0) Color(0xFFFFD700) else Color.Gray
+                        )
+                        Text(
+                            text = "$currentStreak",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (currentStreak > 0) Color.Black else Color.Gray
+                        )
+                    }
+                    Text("App Streak", color = Color.Gray)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (bestStreak > 0) BoltIconFilled else BoltIconOutline,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = if (bestStreak > 0) Color(0xFFFFD700) else Color.Gray
+                        )
+                        Text(
+                            text = "$bestStreak Best",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (bestStreak > 0) Color.Black else Color.Gray
+                        )
+                    }
+                }
+
+                Box(modifier = Modifier.width(1.dp).height(80.dp).background(Color.LightGray))
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(32.dp), tint = Color.Gray)
+                        Text("0", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                    }
+                    Text("Daily Refresh Streak", color = Color.Gray, fontSize = 12.sp, textAlign = TextAlign.Center)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+                        Text("0 Best", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            if (currentStreak > 0) {
+                Text(
+                    text = when {
+                        currentStreak == 1 -> "Just getting started!"
+                        currentStreak < 7 -> "$currentStreak days in a row"
+                        currentStreak < 30 -> "${currentStreak / 7} ${if (currentStreak / 7 == 1) "week" else "weeks"} in a row"
+                        else -> "${currentStreak / 30} ${if (currentStreak / 30 == 1) "month" else "months"} in a row"
+                    },
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "$currentStreak ${if (currentStreak == 1) "day" else "days"} in the Katiba App",
+                    color = Color.Gray
+                )
+            } else {
+                Text("Start your streak today!", fontWeight = FontWeight.Bold)
+                Text("Open the app daily to build your habit", color = Color.Gray)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Simple calendar representation
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                val days = listOf("S", "M", "T", "W", "T", "F", "S")
+                val dates = listOf("11", "12", "13", "14", "15", "16", "17")
+
+                days.zip(dates).forEach { (day, date) ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(day, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .let {
+                                    if (date == "12") it.background(Color.Transparent).border(1.dp, Color.Black, CircleShape)
+                                    else it
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(date)
+                            if (date == "11" || date == "12") {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(4.dp)
+                                        .background(Color.Red, CircleShape)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+// Bolt icon filled (for streak > 0)
+private val BoltIconFilled: ImageVector
+    get() = ImageVector.Builder(
+        name = "BoltFilled",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(fill = SolidColor(Color.Black)) {
+            moveTo(13f, 3f)
+            lineTo(13f, 10f)
+            lineTo(19f, 10f)
+            lineTo(11f, 21f)
+            lineTo(11f, 14f)
+            lineTo(5f, 14f)
+            lineTo(13f, 3f)
+            close()
+        }
+    }.build()
+
+// Bolt icon outline (for streak = 0)
+private val BoltIconOutline: ImageVector
+    get() = ImageVector.Builder(
+        name = "BoltOutline",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = null,
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round
+        ) {
+            moveTo(13f, 3f)
+            lineTo(13f, 10f)
+            lineTo(19f, 10f)
+            lineTo(11f, 21f)
+            lineTo(11f, 14f)
+            lineTo(5f, 14f)
+            lineTo(13f, 3f)
+            close()
+        }
+    }.build()
 
 @Composable
 private fun AchievementsCard(badges: List<Badge>) {

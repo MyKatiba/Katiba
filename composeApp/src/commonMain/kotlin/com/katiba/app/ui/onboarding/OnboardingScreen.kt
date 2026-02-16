@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,18 +33,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.katiba.app.ui.theme.KatibaColors
+import katiba.composeapp.generated.resources.Res
+import katiba.composeapp.generated.resources.onboarding_screen1
+import katiba.composeapp.generated.resources.onboarding_screen2
+import katiba.composeapp.generated.resources.onboarding_screen3
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * Data class representing a single onboarding page
  */
 private data class OnboardingPage(
-    val emoji: String,
+    val backgroundImage: DrawableResource,
     val title: String,
     val description: String,
     val accentColor: Color
@@ -51,19 +59,19 @@ private data class OnboardingPage(
 
 private val onboardingPages = listOf(
     OnboardingPage(
-        emoji = "📜",
+        backgroundImage = Res.drawable.onboarding_screen1,
         title = "Know Your Rights",
         description = "Learn the Kenyan Constitution in bite-sized lessons. Understand the laws that protect and empower you as a citizen.",
         accentColor = KatibaColors.KenyaGreen
     ),
     OnboardingPage(
-        emoji = "🔥",
+        backgroundImage = Res.drawable.onboarding_screen2,
         title = "Learn Daily",
         description = "Build your streak with daily clause insights, AI-powered summaries, and practical tips for civic life.",
         accentColor = KatibaColors.KenyaRed
     ),
     OnboardingPage(
-        emoji = "🏅",
+        backgroundImage = Res.drawable.onboarding_screen3,
         title = "Become a Mzalendo",
         description = "Earn badges, track your progress, and become a civic champion for Kenya. Your journey starts here!",
         accentColor = KatibaColors.BeadGold
@@ -89,27 +97,7 @@ fun OnboardingScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Kenyan flag gradient stripe at the top
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            KatibaColors.KenyaBlack,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaWhite,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaBlack
-                        )
-                    )
-                )
-        )
-
-        // Pager content takes most of the screen
+        // Pager content takes most of the screen (no Kenya flag border)
         HorizontalPager(
             state = pagerState,
             modifier = Modifier
@@ -122,85 +110,89 @@ fun OnboardingScreen(
             )
         }
 
-        // Bottom section: page indicator + button
-        Column(
+        // Bottom section: page indicator + button (overlaid on the pager)
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp)
                 .padding(bottom = 48.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            contentAlignment = Alignment.Center
         ) {
-            // Custom page indicator dots
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                repeat(onboardingPages.size) { index ->
-                    val isSelected = index == currentPage
-                    val dotWidth by animateDpAsState(
-                        targetValue = if (isSelected) 24.dp else 8.dp,
-                        animationSpec = tween(300)
-                    )
-                    val dotColor by animateColorAsState(
-                        targetValue = if (isSelected) currentAccent else KatibaColors.SurfaceVariant,
-                        animationSpec = tween(300)
-                    )
-                    Box(
+                // Custom page indicator dots
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(onboardingPages.size) { index ->
+                        val isSelected = index == currentPage
+                        val dotWidth by animateDpAsState(
+                            targetValue = if (isSelected) 24.dp else 8.dp,
+                            animationSpec = tween(300)
+                        )
+                        val dotColor by animateColorAsState(
+                            targetValue = if (isSelected) Color.White else Color.White.copy(alpha = 0.4f),
+                            animationSpec = tween(300)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .height(8.dp)
+                                .width(dotWidth)
+                                .clip(CircleShape)
+                                .background(dotColor)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Centered button with rounded rectangle shape
+                if (currentPage == onboardingPages.size - 1) {
+                    // "Get Started" button — only on page 3
+                    Button(
+                        onClick = onGetStarted,
                         modifier = Modifier
-                            .height(8.dp)
-                            .width(dotWidth)
-                            .clip(CircleShape)
-                            .background(dotColor)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Centered button with rounded rectangle shape
-            if (currentPage == onboardingPages.size - 1) {
-                // "Get Started" button — only on page 3
-                Button(
-                    onClick = onGetStarted,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = currentAccent,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text(
-                        text = "Get Started",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
-            } else {
-                // "Next" button — pages 1 & 2
-                Button(
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(currentPage + 1)
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = currentAccent,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Text(
-                        text = "Next",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = currentAccent
+                        )
+                    ) {
+                        Text(
+                            text = "Get Started",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
+                } else {
+                    // "Next" button — pages 1 & 2
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(currentPage + 1)
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = currentAccent
+                        )
+                    ) {
+                        Text(
+                            text = "Next",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
         }
@@ -212,41 +204,64 @@ private fun OnboardingPageContent(
     page: OnboardingPage,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Box(
         modifier = modifier
-            .padding(horizontal = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
     ) {
-        // Large emoji illustration
-        Text(
-            text = page.emoji,
-            fontSize = 96.sp,
-            textAlign = TextAlign.Center
+        // Background image
+        Image(
+            painter = painterResource(page.backgroundImage),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Title
-        Text(
-            text = page.title,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = page.accentColor,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+        // Gradient overlay for better text readability
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.3f),
+                            Color.Black.copy(alpha = 0.7f)
+                        ),
+                        startY = 0f,
+                        endY = Float.POSITIVE_INFINITY
+                    )
+                )
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // Text content at the bottom
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 32.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Title
+            Text(
+                text = page.title,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
 
-        // Description
-        Text(
-            text = page.description,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            lineHeight = 26.sp,
-            modifier = Modifier.fillMaxWidth()
-        )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Description
+            Text(
+                text = page.description,
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White.copy(alpha = 0.9f),
+                textAlign = TextAlign.Center,
+                lineHeight = 26.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
