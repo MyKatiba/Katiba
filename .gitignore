@@ -114,4 +114,5 @@ kotlin-js-store/
 *.temp
 *.swp
 *~
-
+# Firebase / Google Services
+google-services.json
