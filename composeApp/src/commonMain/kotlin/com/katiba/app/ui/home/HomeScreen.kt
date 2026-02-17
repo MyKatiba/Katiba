@@ -344,6 +344,8 @@ fun StreakBottomSheet(
     currentStreak: Int,
     bestStreak: Int
 ) {
+    val dailyRefreshStreak = remember { StreakManager.getDailyRefreshStreak() }
+    val bestDailyRefreshStreak = remember { StreakManager.getBestDailyRefreshStreak() }
     
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -420,14 +422,34 @@ fun StreakBottomSheet(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(32.dp), tint = Color.Gray)
-                        Text("0", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp),
+                            tint = if (dailyRefreshStreak > 0) KatibaColors.KenyaGreen else Color.Gray
+                        )
+                        Text(
+                            text = "$dailyRefreshStreak",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (dailyRefreshStreak > 0) Color.Black else Color.Gray
+                        )
                     }
                     Text("Daily Refresh Streak", color = Color.Gray, fontSize = 12.sp, textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
-                        Text("0 Best", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
+                        Icon(
+                            imageVector = Icons.Default.Favorite,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = if (bestDailyRefreshStreak > 0) KatibaColors.KenyaGreen else Color.Gray
+                        )
+                        Text(
+                            text = "$bestDailyRefreshStreak Best",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (bestDailyRefreshStreak > 0) Color.Black else Color.Gray
+                        )
                     }
                 }
             }
@@ -455,34 +477,56 @@ fun StreakBottomSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Simple calendar representation
+            // Week calendar with real streak data
+            val weekData = remember { StreakManager.getWeekStreakData() }
+            val todayString = remember { 
+                val now = Clock.System.now()
+                now.toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+            }
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val days = listOf("S", "M", "T", "W", "T", "F", "S")
-                val dates = listOf("11", "12", "13", "14", "15", "16", "17")
-                
-                days.zip(dates).forEach { (day, date) ->
+                weekData.forEach { (dateStr, streakData) ->
+                    val date = dateStr.substringAfterLast("-")
+                    val dayOfWeek = remember(dateStr) {
+                        val parts = dateStr.split("-")
+                        val localDate = kotlinx.datetime.LocalDate(parts[0].toInt(), parts[1].toInt(), parts[2].toInt())
+                        val dayIndex = localDate.dayOfWeek.ordinal
+                        listOf("M", "T", "W", "T", "F", "S", "S")[dayIndex]
+                    }
+                    val isToday = dateStr == todayString
+                    
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(day, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        Text(dayOfWeek, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(8.dp))
                         Box(
                             modifier = Modifier
                                 .size(32.dp)
                                 .let { 
-                                    if (date == "12") it.background(Color.Transparent).border(1.dp, Color.Black, CircleShape)
+                                    if (isToday) it.border(1.dp, Color.Black, CircleShape)
                                     else it
                                 },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(date)
-                            if (date == "11" || date == "12") {
+                            // Red dot for app streak
+                            if (streakData.hasAppStreak) {
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
-                                        .size(4.dp)
-                                        .background(Color.Red, CircleShape)
+                                        .size(6.dp)
+                                        .background(KatibaColors.KenyaRed, CircleShape)
+                                )
+                            }
+                            // Grey drop marker for daily refresh (bottom left)
+                            if (streakData.hasDailyRefresh) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomStart)
+                                        .size(5.dp)
+                                        .background(Color.Gray, CircleShape)
                                 )
                             }
                         }

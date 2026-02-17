@@ -1,10 +1,13 @@
 package com.katiba.app.ui.home
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -16,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,11 +37,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material3.*
 import com.katiba.app.data.repository.SampleDataRepository
+import com.katiba.app.data.repository.StreakManager
 import com.katiba.app.ui.theme.KatibaColors
 import katiba.composeapp.generated.resources.Res
 import katiba.composeapp.generated.resources.kenya_shield
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import kotlin.random.Random
 
 /**
  * Multi-page detail view for Deep Dive content
@@ -53,6 +60,22 @@ fun AIDescriptionScreen(
     val dailyContent = remember { SampleDataRepository.getDailyContent() }
     val pagerState = rememberPagerState(pageCount = { 4 })
     val scope = rememberCoroutineScope()
+    
+    // Track if user has reached the final page
+    var hasReachedFinalPage by remember { mutableStateOf(false) }
+    var showCelebration by remember { mutableStateOf(false) }
+    var showDoneButton by remember { mutableStateOf(false) }
+    
+    // Trigger celebration when reaching page 3
+    LaunchedEffect(pagerState.currentPage) {
+        if (pagerState.currentPage == 3 && !hasReachedFinalPage) {
+            hasReachedFinalPage = true
+            showCelebration = true
+            delay(1000) // Show fireworks for 1 second
+            showCelebration = false
+            showDoneButton = true
+        }
+    }
 
     Box(
         modifier = modifier
@@ -90,17 +113,13 @@ fun AIDescriptionScreen(
             }
         }
 
-        // Top bar with story progress indicators
-        Column(
+        // Minimal top bar with only story progress indicators (height = 10dp)
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
-                .background(
-                    if (pagerState.currentPage >= 2) Color(0xFF2D2D2D).copy(alpha = 0.95f)
-                    else MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
-                )
                 .statusBarsPadding()
-                .padding(top = 8.dp)
+                .padding(top = 10.dp)
         ) {
             // Story-style progress indicators
             StoryProgressIndicator(
@@ -111,94 +130,67 @@ fun AIDescriptionScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             )
-
-            // Close button row
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = if (pagerState.currentPage >= 2) Color.White
-                               else MaterialTheme.colorScheme.onBackground
-                    )
-                }
-
-                // Page title
-                Text(
-                    text = when (pagerState.currentPage) {
-                        0 -> "Deep Dive"
-                        1 -> "Video Lesson"
-                        2 -> "Inspiration"
-                        else -> "Did You Know?"
-                    },
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (pagerState.currentPage >= 2) Color.White
-                            else MaterialTheme.colorScheme.onBackground
-                )
-
-                // Spacer for symmetry
-                Spacer(modifier = Modifier.width(48.dp))
-            }
         }
 
-        // Bottom navigation arrows (visible on pages 2-3)
-        if (pagerState.currentPage >= 2) {
-            Row(
+        // Show Done button on final page after celebration
+        if (pagerState.currentPage == 3 && showDoneButton) {
+            val interactionSource = remember { MutableInteractionSource() }
+            val isPressed by interactionSource.collectIsPressedAsState()
+            val offset by animateDpAsState(
+                targetValue = if (isPressed) 4.dp else 0.dp,
+                label = "button press"
+            )
+            
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .padding(horizontal = 16.dp, vertical = 32.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(horizontal = 32.dp, vertical = 48.dp)
             ) {
-                // Left arrow
-                IconButton(
+                // Shadow box
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .offset(y = 4.dp)
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(Color(0xFF1A1A1A))
+                )
+                
+                // Done button with physical UI
+                Button(
                     onClick = {
-                        scope.launch {
-                            if (pagerState.currentPage > 0) {
-                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                            }
-                        }
+                        // Record daily refresh completion
+                        StreakManager.recordDailyRefreshCompletion()
+                        // Navigate back to home
+                        onBackClick()
                     },
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF4A4A4A))
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .offset(y = offset),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.White
+                    ),
+                    interactionSource = interactionSource,
+                    border = BorderStroke(2.dp, Color(0xFF2D2D2D))
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Previous",
-                        tint = Color.White
-                    )
-                }
-
-                // Right arrow
-                IconButton(
-                    onClick = {
-                        scope.launch {
-                            if (pagerState.currentPage < 3) {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF4A4A4A))
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Next",
-                        tint = Color.White
+                    Text(
+                        text = "Done",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2D2D2D)
                     )
                 }
             }
+        }
+        
+        // Fireworks celebration animation
+        if (showCelebration) {
+            FireworksAnimation(
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         // Tap zones for pages 0-1
@@ -260,7 +252,6 @@ private fun StoryProgressIndicator(
                     .clip(RoundedCornerShape(1.5.dp))
                     .background(
                         when {
-                            isActive && isDarkTheme -> Color.White
                             isActive -> KatibaColors.KenyaRed
                             isDarkTheme -> Color.Gray.copy(alpha = 0.4f)
                             else -> Color.Gray.copy(alpha = 0.4f)
@@ -270,6 +261,78 @@ private fun StoryProgressIndicator(
         }
     }
 }
+
+/**
+ * Fireworks celebration animation
+ */
+@Composable
+private fun FireworksAnimation(
+    modifier: Modifier = Modifier
+) {
+    // Create multiple particles
+    val particleCount = 30
+    val particles = remember {
+        List(particleCount) {
+            FireworkParticle(
+                startX = Random.nextFloat(),
+                startY = 0.5f,
+                targetX = Random.nextFloat(),
+                targetY = Random.nextFloat(),
+                color = listOf(
+                    Color(0xFFFFD700), // Gold
+                    Color(0xFFFF6B6B), // Red
+                    KatibaColors.KenyaGreen,
+                    Color(0xFF4ECDC4),  // Cyan
+                    Color(0xFFFFBE0B)   // Yellow
+                ).random()
+            )
+        }
+    }
+    
+    Box(modifier = modifier) {
+        particles.forEach { particle ->
+            var animationProgress by remember { mutableStateOf(0f) }
+            
+            LaunchedEffect(Unit) {
+                animate(
+                    initialValue = 0f,
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 800, easing = FastOutSlowInEasing)
+                ) { value, _ ->
+                    animationProgress = value
+                }
+            }
+            
+            val currentX = particle.startX + (particle.targetX - particle.startX) * animationProgress
+            val currentY = particle.startY + (particle.targetY - particle.startY) * animationProgress
+            val alpha = 1f - animationProgress
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.TopStart)
+                    .offset(
+                        x = (currentX * 1000).dp,
+                        y = (currentY * 1000).dp
+                    )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size((8 * (1f - animationProgress * 0.5f)).dp)
+                        .background(particle.color.copy(alpha = alpha), CircleShape)
+                )
+            }
+        }
+    }
+}
+
+private data class FireworkParticle(
+    val startX: Float,
+    val startY: Float,
+    val targetX: Float,
+    val targetY: Float,
+    val color: Color
+)
 
 /**
  * Page 0: Clause Detail Page (moved from ClauseDetailScreen)
@@ -285,15 +348,15 @@ private fun ClauseDetailPage(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Kenya shield watermark in bottom right, tilted 45 degrees
+        // Kenya shield watermark in bottom right, tilted 30 degrees left
         Image(
             painter = painterResource(Res.drawable.kenya_shield),
             contentDescription = null,
             modifier = Modifier
-                .size(150.dp)
+                .size(300.dp)
                 .align(Alignment.BottomEnd)
-                .offset(x = 20.dp, y = 20.dp)
-                .rotate(-45f)
+                .offset(x = 40.dp, y = 40.dp)
+                .rotate(-30f)
                 .alpha(0.08f),
             contentScale = ContentScale.Fit
         )
@@ -326,32 +389,12 @@ private fun ClauseDetailPage(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Article title
-            Text(
-                text = dailyContent.articleTitle,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                textAlign = TextAlign.Center
-            )
-
-            // Chapter subtitle
-            Text(
-                text = "${dailyContent.chapterTitle}, Part ${dailyContent.articleNumber}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
             // Clause card
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                color = Color(0xFFFAFAFA),
-                border = BorderStroke(1.dp, Color(0xFFE8E8E8))
+                color = Color.White,
+                shadowElevation = 2.dp
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp)
@@ -364,82 +407,77 @@ private fun ClauseDetailPage(
                     ) {
                         Text(
                             text = "${dailyContent.articleNumber}",
-                            style = MaterialTheme.typography.displaySmall,
+                            style = MaterialTheme.typography.displayLarge,
                             fontWeight = FontWeight.Light,
-                            color = Color.Black
+                            color = Color(0xFFD3D3D3) // Light grey
                         )
-                        IconButton(
-                            onClick = { /* Bookmark action */ },
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Bookmark",
+                            tint = Color(0xFFC0C0C0),
                             modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Save",
-                                tint = Color.Gray
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Quote text
+                    Text(
+                        text = "\"${dailyContent.clause.text}\"",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Black,
+                        lineHeight = 28.sp,
+                        textAlign = TextAlign.Start
+                    )
+
+                    // Sub-clauses if any
+                    if (dailyContent.clause.subClauses.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        dailyContent.clause.subClauses.forEach { subClause ->
+                            Text(
+                                text = "(${subClause.label}) ${subClause.text}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.Black,
+                                lineHeight = 28.sp,
+                                textAlign = TextAlign.Start,
+                                modifier = Modifier.padding(vertical = 4.dp)
                             )
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Small decorative line (Kenya flag colors)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(30.dp)
+                                .height(3.dp)
+                                .background(KatibaColors.KenyaBlack)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .width(30.dp)
+                                .height(3.dp)
+                                .background(KatibaColors.KenyaRed)
+                        )
+                        Box(
+                            modifier = Modifier
+                                .width(30.dp)
+                                .height(3.dp)
+                                .background(KatibaColors.KenyaGreen)
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // Quote with decorative line
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min)
-                    ) {
-                        // Decorative vertical line
-                        Box(
-                            modifier = Modifier
-                                .width(3.dp)
-                                .fillMaxHeight()
-                                .background(KatibaColors.KenyaRed)
-                        )
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "\"${dailyContent.clause.text}\"",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontStyle = FontStyle.Italic,
-                                color = Color.Black,
-                                lineHeight = 28.sp
-                            )
-
-                            // Sub-clauses if any
-                            if (dailyContent.clause.subClauses.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(16.dp))
-                                dailyContent.clause.subClauses.forEach { subClause ->
-                                    Row(
-                                        modifier = Modifier.padding(vertical = 4.dp)
-                                    ) {
-                                        Text(
-                                            text = "(${subClause.label})",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = KatibaColors.KenyaGreen,
-                                            fontWeight = FontWeight.SemiBold,
-                                            modifier = Modifier.width(28.dp)
-                                        )
-                                        Text(
-                                            text = subClause.text,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = Color.Black.copy(alpha = 0.8f)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
 
                     // Constitution source
                     Text(
                         text = "Constitution of Kenya, 2010",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(start = 19.dp)
+                        color = Color.Gray
                     )
                 }
             }
@@ -453,12 +491,12 @@ private fun ClauseDetailPage(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Green bullet indicator
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp)
-                            .clip(CircleShape)
-                            .background(KatibaColors.KenyaGreen)
+                    // Yellow lightbulb icon
+                    Icon(
+                        imageVector = Icons.Default.Lightbulb,
+                        contentDescription = null,
+                        tint = Color(0xFFFFD700), // Bright yellow/gold
+                        modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
@@ -491,14 +529,31 @@ private fun VideoPage(
     educatorName: String,
     articleTitle: String
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(top = 100.dp) // Account for top bar
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 20.dp)
     ) {
+        // Kenya shield watermark
+        Image(
+            painter = painterResource(Res.drawable.kenya_shield),
+            contentDescription = null,
+            modifier = Modifier
+                .size(300.dp)
+                .align(Alignment.BottomEnd)
+                .offset(x = 40.dp, y = 40.dp)
+                .rotate(-30f)
+                .alpha(0.08f),
+            contentScale = ContentScale.Fit
+        )
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 60.dp) // Reduced for minimal header
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp)
+        ) {
         // Video player placeholder
         Box(
             modifier = Modifier
@@ -601,16 +656,17 @@ private fun InspirationPage(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF2D2D2D))
-            .padding(top = 100.dp) // Account for top bar
+            .padding(top = 60.dp) // Reduced for minimal header
     ) {
         // Kenya shield watermark
         Image(
             painter = painterResource(Res.drawable.kenya_shield),
             contentDescription = null,
             modifier = Modifier
-                .size(180.dp)
+                .size(360.dp)
                 .align(Alignment.BottomEnd)
-                .offset(x = 40.dp, y = 40.dp)
+                .offset(x = 80.dp, y = 80.dp)
+                .rotate(-30f)
                 .alpha(0.05f),
             contentScale = ContentScale.Fit
         )
@@ -619,7 +675,7 @@ private fun InspirationPage(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 32.dp)
-                .padding(bottom = 100.dp), // Account for bottom nav arrows
+                .padding(bottom = 48.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start
         ) {

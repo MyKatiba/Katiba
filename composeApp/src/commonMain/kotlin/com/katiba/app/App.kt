@@ -460,8 +460,10 @@ private fun AppContent(
                             onSignOut = {
                                 coroutineScope.launch {
                                     authRepository.signOut()
-                                    // Navigate back to Profile (which will show Login)
-                                    backStack.removeLast() 
+                                    // Clear entire backstack and navigate to ProfileRoute
+                                    // This prevents going back and ensures login screen shows
+                                    backStack.clear()
+                                    backStack.add(ProfileRoute)
                                 }
                             }
                         )
