@@ -11,10 +11,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.HowToVote
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -152,21 +156,12 @@ fun ProfileScreen(
             .fillMaxSize()
             .background(KatibaColors.Background)
     ) {
-        // Top bar with gray bottom border and shadow
+        // Top bar with shadow (no border)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(KatibaColors.Background)
                 .shadow(elevation = 2.dp)
-                .drawBehind {
-                    // Gray bottom border
-                    drawLine(
-                        color = Color(0xFFE0E0E0),
-                        start = Offset(0f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = 1.dp.toPx()
-                    )
-                }
         ) {
             // Header
             Row(
@@ -178,8 +173,8 @@ fun ProfileScreen(
             ) {
                 Text(
                     text = "Profile",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                     color = KatibaColors.KenyaBlack
                 )
                 IconButton(
@@ -207,7 +202,7 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp),
+                .padding(top = 10.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Profile Card
@@ -302,6 +297,7 @@ private fun ProfileCard(userProfile: UserProfile) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .height(210.dp)
             .shadow(
                 elevation = 8.dp,
                 shape = RoundedCornerShape(24.dp),
@@ -310,221 +306,128 @@ private fun ProfileCard(userProfile: UserProfile) {
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            // Bracelet header image (top third only - reduced to 70dp)
+            // Grey abstract background layer
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(70.dp)
-                    .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.bracelet),
-                    contentDescription = "Kenyan beadwork bracelet",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            }
-
-            // Abstract green design section (bottom two thirds)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF2E7D32), // Darker green
-                                Color(0xFF388E3C), // Medium green
-                                Color(0xFF43A047)  // Lighter green
-                            )
-                        )
-                    )
+                    .fillMaxSize()
+                    .background(Color(0xFFF5F5F5))
                     .drawBehind {
-                        // Draw abstract circles like in the reference image
-                        // Large semi-transparent circle on the right
+                        // Draw pale white abstract circles
                         drawCircle(
-                            color = Color.White.copy(alpha = 0.08f),
-                            radius = 120.dp.toPx(),
-                            center = Offset(size.width * 0.9f, size.height * 0.8f)
+                            color = Color.White.copy(alpha = 0.5f),
+                            radius = 100.dp.toPx(),
+                            center = Offset(size.width * 0.85f, size.height * 0.7f)
                         )
-                        // Medium circle
                         drawCircle(
-                            color = Color.White.copy(alpha = 0.06f),
-                            radius = 80.dp.toPx(),
-                            center = Offset(size.width * 0.75f, size.height * 0.4f)
+                            color = Color.White.copy(alpha = 0.4f),
+                            radius = 70.dp.toPx(),
+                            center = Offset(size.width * 0.2f, size.height * 0.3f)
                         )
-                        // Small circle
                         drawCircle(
-                            color = Color.White.copy(alpha = 0.05f),
+                            color = Color.White.copy(alpha = 0.3f),
                             radius = 50.dp.toPx(),
-                            center = Offset(size.width * 0.1f, size.height * 0.7f)
-                        )
-                        // Another small decorative circle
-                        drawCircle(
-                            color = Color.White.copy(alpha = 0.04f),
-                            radius = 35.dp.toPx(),
-                            center = Offset(size.width * 0.3f, size.height * 0.2f)
+                            center = Offset(size.width * 0.6f, size.height * 0.2f)
                         )
                     }
-            ) {
-                // Avatar overlapping - positioned in the center of this section
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .offset(y = (-60).dp),
-                    contentAlignment = Alignment.TopCenter
-                ) {
-                    // Avatar with edit button
-                    Box {
-                        Box(
-                            modifier = Modifier
-                                .size(96.dp)
-                                .clip(CircleShape)
-                                .border(4.dp, Color.White, CircleShape)
-                                .shadow(8.dp, CircleShape)
-                                .background(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color(0xFFE8D5B7),
-                                            Color(0xFFD4A574)
-                                        )
-                                    )
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // Placeholder avatar - shows initials
-                            Text(
-                                text = userProfile.name.split(" ")
-                                    .mapNotNull { it.firstOrNull()?.toString() }
-                                    .take(2)
-                                    .joinToString(""),
-                                style = MaterialTheme.typography.headlineLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF8B4513)
-                            )
-                        }
+            )
 
-                        // Edit button
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .align(Alignment.BottomEnd)
-                                .offset(x = 4.dp, y = 4.dp)
-                                .clip(CircleShape)
-                                .background(KatibaColors.KenyaRed)
-                                .border(2.dp, Color.White, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit Profile",
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
+            // Bracelet image overlay filling entire card
+            Image(
+                painter = painterResource(Res.drawable.bracelet),
+                contentDescription = "Kenyan beadwork bracelet",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(24.dp)),
+                contentScale = ContentScale.Crop,
+                alpha = 0.85f
+            )
+
+            // Avatar and user info positioned in Row at left
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Avatar with edit button
+                Box(
+                    modifier = Modifier.padding(end = 15.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .border(4.dp, Color.White, CircleShape)
+                            .shadow(8.dp, CircleShape)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color(0xFFE8D5B7),
+                                        Color(0xFFD4A574)
+                                    )
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Placeholder avatar - shows initials
+                        Text(
+                            text = userProfile.name.split(" ")
+                                .mapNotNull { it.firstOrNull()?.toString() }
+                                .take(2)
+                                .joinToString(""),
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF8B4513)
+                        )
+                    }
+
+                    // Edit button
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .align(Alignment.BottomEnd)
+                            .offset(x = 4.dp, y = 4.dp)
+                            .clip(CircleShape)
+                            .background(KatibaColors.KenyaRed)
+                            .border(2.dp, Color.White, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Profile",
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp)
+                        )
                     }
                 }
 
-                // Content below avatar inside the green area
+                // Name and citizen since text
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 50.dp)
-                        .padding(horizontal = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.weight(1f)
                 ) {
-                    // Name
                     Text(
                         text = userProfile.name,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
-
-                    // Member since
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Citizen since ${userProfile.joinedDate}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = Color.White.copy(alpha = 0.9f),
                         fontWeight = FontWeight.Medium
                     )
                 }
             }
-
-            // Tags row (below the green section)
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
-                    .padding(vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    // Location tag - with fixed height
-                    ProfileTag(
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null,
-                                tint = KatibaColors.KenyaRed,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        },
-                        text = "Nairobi, Kenya",
-                        modifier = Modifier.height(32.dp)
-                    )
-
-                    // Verified tag - with fixed height
-                    ProfileTag(
-                        icon = {
-                            Text(
-                                text = "✓",
-                                color = KatibaColors.KenyaGreen,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        },
-                        text = "Verified Voter",
-                        modifier = Modifier.height(32.dp)
-                    )
-                }
-            }
         }
     }
 }
 
-@Composable
-private fun ProfileTag(
-    icon: @Composable () -> Unit,
-    text: String,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = Color(0xFFF3F4F6),
-        modifier = modifier
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            icon()
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = Color(0xFF4B5563)
-            )
-        }
-    }
-}
+
 
 @Composable
 private fun StatCard(
@@ -1277,7 +1180,7 @@ private fun CivicDataBottomSheet(
             
             // National ID
             DetailRow(
-                icon = "🆔",
+                icon = Icons.Default.Badge,
                 label = "National ID",
                 value = userProfile.nationalId.ifEmpty { "Not set" }
             )
@@ -1286,7 +1189,7 @@ private fun CivicDataBottomSheet(
             
             // County
             DetailRow(
-                icon = "🏛️",
+                icon = Icons.Default.AccountBalance,
                 label = "County",
                 value = userProfile.county.ifEmpty { "Not set" }
             )
@@ -1295,7 +1198,7 @@ private fun CivicDataBottomSheet(
             
             // Constituency
             DetailRow(
-                icon = "📍",
+                icon = Icons.Default.LocationOn,
                 label = "Constituency",
                 value = userProfile.constituency.ifEmpty { "Not set" }
             )
@@ -1304,7 +1207,7 @@ private fun CivicDataBottomSheet(
             
             // Ward
             DetailRow(
-                icon = "🗺️",
+                icon = Icons.Default.Map,
                 label = "Ward",
                 value = userProfile.ward.ifEmpty { "Not set" }
             )
@@ -1334,9 +1237,11 @@ private fun CivicDataBottomSheet(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            text = "🗳️",
-                            fontSize = 24.sp
+                        Icon(
+                            imageVector = Icons.Default.HowToVote,
+                            contentDescription = "Voter Status",
+                            tint = if (userProfile.isRegisteredVoter) KatibaColors.KenyaGreen else Color.Gray,
+                            modifier = Modifier.size(24.dp)
                         )
                         Column {
                             Text(
@@ -1395,7 +1300,7 @@ private fun CivicDataBottomSheet(
 
 @Composable
 private fun DetailRow(
-    icon: String,
+    icon: ImageVector,
     label: String,
     value: String
 ) {
@@ -1404,9 +1309,11 @@ private fun DetailRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = icon,
-            fontSize = 24.sp
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = KatibaColors.KenyaGreen,
+            modifier = Modifier.size(24.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(

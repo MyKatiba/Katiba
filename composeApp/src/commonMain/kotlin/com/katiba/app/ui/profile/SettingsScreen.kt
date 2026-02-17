@@ -1,13 +1,18 @@
 package com.katiba.app.ui.profile
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.katiba.app.ui.theme.KatibaColors
@@ -50,7 +56,8 @@ fun SettingsScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background
-                    )
+                    ),
+                    windowInsets = WindowInsets(0.dp)
                 )
                 HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
             }
@@ -67,19 +74,19 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "Account") {
                     SettingsItem(
-                        icon = "👤",
+                        icon = Icons.Default.Person,
                         title = "Edit Profile",
                         subtitle = "Name, email, avatar"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = "🔐",
+                        icon = Icons.Default.Lock,
                         title = "Password & Security",
                         subtitle = "Change password, 2FA"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = "📍",
+                        icon = Icons.Default.LocationOn,
                         title = "Update Residence",
                         subtitle = "County, constituency, ward"
                     )
@@ -93,13 +100,13 @@ fun SettingsScreen(
                 
                 SettingsSection(title = "Civic Information") {
                     SettingsItem(
-                        icon = "🆔",
+                        icon = Icons.Default.Badge,
                         title = "National ID",
                         subtitle = "Update your national ID number"
                     )
                     HorizontalDivider()
                     SettingsToggleItem(
-                        icon = "🗳️",
+                        icon = Icons.Default.HowToVote,
                         title = "Registered Voter",
                         subtitle = if (isRegisteredVoter) "You are registered to vote" else "Not registered to vote",
                         checked = isRegisteredVoter,
@@ -119,7 +126,7 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "Notifications") {
                     SettingsToggleItem(
-                        icon = "🔔",
+                        icon = Icons.Default.Notifications,
                         title = "Daily Reminders",
                         subtitle = "Get notified about your daily clause",
                         checked = true,
@@ -127,7 +134,7 @@ fun SettingsScreen(
                     )
                     HorizontalDivider()
                     SettingsToggleItem(
-                        icon = "🎯",
+                        icon = Icons.Default.TrackChanges,
                         title = "Streak Reminders",
                         subtitle = "Don't break your streak!",
                         checked = true,
@@ -135,7 +142,7 @@ fun SettingsScreen(
                     )
                     HorizontalDivider()
                     SettingsToggleItem(
-                        icon = "📢",
+                        icon = Icons.Default.Campaign,
                         title = "New Content",
                         subtitle = "Be notified of new lessons",
                         checked = false,
@@ -148,19 +155,19 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "Display") {
                     SettingsItem(
-                        icon = "🌙",
+                        icon = Icons.Default.DarkMode,
                         title = "Appearance",
                         subtitle = "Light, Dark, System"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = "🔤",
+                        icon = Icons.Default.TextFields,
                         title = "Font Size",
                         subtitle = "Adjust text size"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = "🌐",
+                        icon = Icons.Default.Language,
                         title = "Language",
                         subtitle = "English"
                     )
@@ -171,25 +178,25 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "About") {
                     SettingsItem(
-                        icon = "📖",
+                        icon = Icons.Default.MenuBook,
                         title = "About Katiba",
                         subtitle = "Learn about the app"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = "📜",
+                        icon = Icons.Default.Description,
                         title = "Terms of Service",
                         subtitle = "Read our terms"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = "🔒",
+                        icon = Icons.Default.Lock,
                         title = "Privacy Policy",
                         subtitle = "How we protect your data"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = "💬",
+                        icon = Icons.Default.Chat,
                         title = "Send Feedback",
                         subtitle = "Help us improve"
                     )
@@ -234,25 +241,56 @@ fun SettingsScreen(
             
             // Sign out
             item {
-                Surface(
-                    color = KatibaColors.KenyaRed.copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(12.dp),
+                val interactionSource = remember { MutableInteractionSource() }
+                val isButtonPressed by interactionSource.collectIsPressedAsState()
+                val buttonPressOffset by animateDpAsState(
+                    targetValue = if (isButtonPressed) 4.dp else 0.dp,
+                    animationSpec = tween(durationMillis = 100)
+                )
+
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onSignOut() }
+                        .height(60.dp)
                 ) {
+                    // Shadow box at bottom
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
+                            .height(56.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(
+                                color = Color(0xFF8B0000),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                    )
+
+                    // Button with press animation
+                    Surface(
+                        color = KatibaColors.KenyaRed.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .offset(y = buttonPressOffset)
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null
+                            ) { onSignOut() }
                     ) {
-                        Text(
-                            text = "Sign Out",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = KatibaColors.KenyaRed,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Sign Out",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = KatibaColors.KenyaRed,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
             }
@@ -289,7 +327,7 @@ private fun SettingsSection(
 
 @Composable
 private fun SettingsItem(
-    icon: String,
+    icon: ImageVector,
     title: String,
     subtitle: String,
     onClick: () -> Unit = { }
@@ -301,10 +339,11 @@ private fun SettingsItem(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = icon,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.width(32.dp)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(20.dp).padding(end = 12.dp)
         )
         
         Column(modifier = Modifier.weight(1f)) {
@@ -330,7 +369,7 @@ private fun SettingsItem(
 
 @Composable
 private fun SettingsToggleItem(
-    icon: String,
+    icon: ImageVector,
     title: String,
     subtitle: String,
     checked: Boolean,
@@ -343,10 +382,11 @@ private fun SettingsToggleItem(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = icon,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.width(32.dp)
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (enabled) MaterialTheme.colorScheme.onSurface else Color.Gray,
+            modifier = Modifier.size(20.dp).padding(end = 12.dp)
         )
         
         Column(modifier = Modifier.weight(1f)) {

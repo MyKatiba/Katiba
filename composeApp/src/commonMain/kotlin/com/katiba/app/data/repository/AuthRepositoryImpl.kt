@@ -213,7 +213,13 @@ class AuthRepositoryImpl : AuthRepository {
             val result = firebaseAuth.signInWithCredential(credential)
             val user = result.user
             if (user != null) {
-                 val profile = UserProfile(
+                // Get Firebase ID token and save it for API calls
+                val firebaseIdToken = user.getIdToken(false)
+                if (firebaseIdToken != null) {
+                    TokenManager.saveTokens(firebaseIdToken, firebaseIdToken)
+                }
+                
+                val profile = UserProfile(
                     id = user.uid,
                     name = user.displayName ?: "User",
                     email = user.email ?: "",
@@ -221,10 +227,10 @@ class AuthRepositoryImpl : AuthRepository {
                     emailVerified = user.isEmailVerified,
                     joinedDate = ""
                 )
-                 _currentUser.value = profile
-                 return Result.success(profile)
+                _currentUser.value = profile
+                return Result.success(profile)
             }
-             return Result.failure(Exception("User is null"))
+            return Result.failure(Exception("User is null"))
         } catch (e: Exception) {
             return Result.failure(e)
         }

@@ -277,7 +277,6 @@ private fun KatibaAITopBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
                 .height(44.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -354,33 +353,42 @@ private fun ChatHistoryDrawer(
             Spacer(modifier = Modifier.statusBarsPadding())
 
             // New Chat button at top
-            Row(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onNewChat() }
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .shadow(2.dp, RoundedCornerShape(12.dp)),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Box(
+                Row(
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFFF3F4F6)),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .clickable { onNewChat() }
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        tint = Color.Gray,
-                        modifier = Modifier.size(20.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFF3F4F6)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "New chat",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Black
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "New chat",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Black
-                )
             }
 
             HorizontalDivider(color = Color(0xFFF3F4F6))
@@ -444,54 +452,64 @@ private fun ChatHistoryItem(
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (isActive) Color(0xFFF0FDF4) else Color.Transparent)
-            .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .shadow(1.dp, RoundedCornerShape(12.dp)),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isActive) Color(0xFFF0FDF4) else Color.White
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (isActive) KatibaColors.KenyaGreen else Color.Black,
-            fontWeight = if (isActive) FontWeight.Medium else FontWeight.Normal,
-            maxLines = 1,
-            modifier = Modifier.weight(1f)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onClick() }
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (isActive) KatibaColors.KenyaGreen else Color.Black,
+                fontWeight = if (isActive) FontWeight.Medium else FontWeight.Normal,
+                maxLines = 1,
+                modifier = Modifier.weight(1f)
+            )
 
-        Box {
-            IconButton(
-                onClick = { showMenu = true },
-                modifier = Modifier.size(24.dp)
-            ) {
-                Icon(
-                    imageVector = MoreVertIcon,
-                    contentDescription = "More options",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
+            Box {
+                IconButton(
+                    onClick = { showMenu = true },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = MoreVertIcon,
+                        contentDescription = "More options",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
 
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text("Delete") },
-                    onClick = {
-                        showMenu = false
-                        onDelete()
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            tint = KatibaColors.KenyaRed
-                        )
-                    }
-                )
+                DropdownMenu(
+                    expanded = showMenu,
+                    onDismissRequest = { showMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Delete") },
+                        onClick = {
+                            showMenu = false
+                            onDelete()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = null,
+                                tint = KatibaColors.KenyaRed
+                            )
+                        }
+                    )
+                }
             }
         }
     }

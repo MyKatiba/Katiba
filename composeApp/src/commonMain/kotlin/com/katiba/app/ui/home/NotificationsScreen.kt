@@ -41,7 +41,8 @@ fun NotificationsScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background
-                    )
+                    ),
+                    windowInsets = WindowInsets(0.dp)
                 )
                 HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
             }

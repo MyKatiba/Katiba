@@ -137,13 +137,20 @@ private fun AppContent(
             }
         }
 
+        // Observe authentication state
+        val currentUser by authRepository.currentUser.collectAsState(initial = null)
+        
         // Determine if bottom bar should be shown
         // ClauseDetailRoute and other detail screens don't show the bottom bar
-        val showBottomBar = remember(currentKey) {
-            currentKey is HomeRoute ||
-            currentKey is ConstitutionRoute ||
-            currentKey is PlansRoute ||
-            currentKey is ProfileRoute
+        // Also hide bottom bar if on ProfileRoute but user is not authenticated (showing login/signup)
+        val showBottomBar = remember(currentKey, currentUser) {
+            when {
+                currentKey is HomeRoute -> true
+                currentKey is ConstitutionRoute -> true
+                currentKey is PlansRoute -> true
+                currentKey is ProfileRoute -> currentUser != null // Only show if authenticated
+                else -> false
+            }
         }
 
         // Check if we're on an auth/onboarding screen (no back navigation to these after login)

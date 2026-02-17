@@ -945,54 +945,59 @@ private fun LearningProgressCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .drawBehind {
-                    // Abstract watermark designs - subtle geometric patterns
-                    val watermarkColor = Color(0xFFE8F5E9) // Very light green
-
-                    // Draw large abstract circles
-                    drawCircle(
-                        color = watermarkColor,
-                        radius = 120.dp.toPx(),
-                        center = Offset(size.width * 0.85f, size.height * 0.2f)
+                    // Shield pattern background inspired by the badge image
+                    // Dark red/brown gradient base
+                    val gradientColors = listOf(
+                        Color(0xFF5D2C2C), // Dark brown-red
+                        Color(0xFF8B3A3A), // Medium red
+                        Color(0xFF6D3434)  // Brown-red
                     )
+                    
+                    // Draw gradient background
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            colors = gradientColors,
+                            startY = 0f,
+                            endY = size.height
+                        )
+                    )
+                    
+                    // Draw abstract shield pattern overlay
+                    val shieldColor = Color(0xFFB85555).copy(alpha = 0.3f)
+                    val darkOverlay = Color(0xFF2D1515).copy(alpha = 0.4f)
+                    
+                    // Large shield shape in top right
                     drawCircle(
-                        color = watermarkColor.copy(alpha = 0.5f),
+                        color = shieldColor,
+                        radius = 100.dp.toPx(),
+                        center = Offset(size.width * 0.85f, size.height * 0.15f)
+                    )
+                    
+                    // Dark overlay circles for depth
+                    drawCircle(
+                        color = darkOverlay,
                         radius = 80.dp.toPx(),
-                        center = Offset(size.width * 0.1f, size.height * 0.9f)
+                        center = Offset(size.width * 0.15f, size.height * 0.7f)
                     )
-
-                    // Draw abstract curved lines
-                    val pathEffect = PathEffect.dashPathEffect(floatArrayOf(20f, 10f), 0f)
-                    drawLine(
-                        color = watermarkColor,
-                        start = Offset(0f, size.height * 0.3f),
-                        end = Offset(size.width * 0.4f, size.height * 0.1f),
-                        strokeWidth = 3.dp.toPx(),
-                        pathEffect = pathEffect
-                    )
-                    drawLine(
-                        color = watermarkColor,
-                        start = Offset(size.width * 0.6f, size.height * 0.9f),
-                        end = Offset(size.width, size.height * 0.6f),
-                        strokeWidth = 3.dp.toPx(),
-                        pathEffect = pathEffect
-                    )
-
-                    // Small decorative dots
-                    val dotColor = Color(0xFFDCEDC8)
+                    
+                    // Medium shield pattern bottom right
                     drawCircle(
-                        color = dotColor,
-                        radius = 6.dp.toPx(),
-                        center = Offset(size.width * 0.2f, size.height * 0.25f)
+                        color = shieldColor.copy(alpha = 0.2f),
+                        radius = 60.dp.toPx(),
+                        center = Offset(size.width * 0.9f, size.height * 0.85f)
                     )
+                    
+                    // Small decorative elements
                     drawCircle(
-                        color = dotColor,
-                        radius = 4.dp.toPx(),
-                        center = Offset(size.width * 0.75f, size.height * 0.75f)
+                        color = Color.White.copy(alpha = 0.05f),
+                        radius = 40.dp.toPx(),
+                        center = Offset(size.width * 0.3f, size.height * 0.3f)
                     )
+                    
                     drawCircle(
-                        color = dotColor,
-                        radius = 8.dp.toPx(),
-                        center = Offset(size.width * 0.5f, size.height * 0.15f)
+                        color = Color.White.copy(alpha = 0.03f),
+                        radius = 25.dp.toPx(),
+                        center = Offset(size.width * 0.65f, size.height * 0.6f)
                     )
                 }
         ) {
