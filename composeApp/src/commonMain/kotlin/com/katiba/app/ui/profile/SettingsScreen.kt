@@ -113,7 +113,7 @@ fun SettingsScreen(
                 
                 SettingsSection(title = "Civic Information") {
                     SettingsItem(
-                        emoji = "🇮🇩",
+                        emoji = "�🇪",
                         title = "National ID",
                         subtitle = "Update your national ID number",
                         onClick = onNationalID

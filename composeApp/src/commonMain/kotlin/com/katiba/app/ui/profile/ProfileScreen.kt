@@ -419,7 +419,7 @@ private fun ProfileCard(userProfile: UserProfile) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Citizen since ${userProfile.joinedDate}",
+                        text = "User Since 2026",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray,
                         fontWeight = FontWeight.Medium
@@ -1099,61 +1099,14 @@ private fun AchievementsBottomSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Achievements grid
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                AchievementItem(
-                    icon = "🛡️",
-                    name = "Civic\nDefender",
-                    isEarned = true
-                )
-                AchievementItem(
-                    icon = "⚖️",
-                    name = "Rights\nExpert",
-                    isEarned = false
-                )
-                AchievementItem(
-                    icon = "🗳️",
-                    name = "Voter\nReady",
-                    isEarned = false
-                )
-                AchievementItem(
-                    icon = "🎓",
-                    name = "Scholar",
-                    isEarned = false
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Additional achievements row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                AchievementItem(
-                    icon = "🔥",
-                    name = "7 Day\nStreak",
-                    isEarned = false
-                )
-                AchievementItem(
-                    icon = "📚",
-                    name = "10 Articles\nRead",
-                    isEarned = false
-                )
-                AchievementItem(
-                    icon = "🌟",
-                    name = "First\nLesson",
-                    isEarned = true
-                )
-                AchievementItem(
-                    icon = "🎯",
-                    name = "Chapter\nComplete",
-                    isEarned = false
-                )
-            }
+            // Empty state - achievements will be implemented
+            Text(
+                text = "Complete lessons and milestones to earn achievements!",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
         }

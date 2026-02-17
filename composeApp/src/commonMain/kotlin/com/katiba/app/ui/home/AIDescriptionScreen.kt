@@ -29,6 +29,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -113,22 +116,22 @@ fun AIDescriptionScreen(
             }
         }
 
-        // Minimal top bar with only story progress indicators (height = 10dp)
+        // Minimal top bar with only story progress indicators
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.TopCenter)
+                .background(Color(0xFF2D2D2D))
                 .statusBarsPadding()
-                .padding(top = 10.dp)
         ) {
             // Story-style progress indicators
             StoryProgressIndicator(
                 pageCount = 4,
                 currentPage = pagerState.currentPage,
-                isDarkTheme = pagerState.currentPage >= 2,
+                isDarkTheme = true,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
 
@@ -193,38 +196,7 @@ fun AIDescriptionScreen(
             )
         }
 
-        // Tap zones for pages 0-1
-        if (pagerState.currentPage < 2) {
-            // Left tap zone for previous page
-            if (pagerState.currentPage > 0) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(80.dp)
-                        .align(Alignment.CenterStart)
-                        .clickable {
-                            scope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                            }
-                        }
-                )
-            }
-
-            // Right tap zone for next page
-            if (pagerState.currentPage < 3) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .width(80.dp)
-                        .align(Alignment.CenterEnd)
-                        .clickable {
-                            scope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
-                        }
-                )
-            }
-        }
+        // Navigation is via swipe only (HorizontalPager handles this)
     }
 }
 
@@ -342,6 +314,7 @@ private fun ClauseDetailPage(
     dailyContent: com.katiba.app.data.model.DailyContent
 ) {
     val scrollState = rememberScrollState()
+    var isBookmarked by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -389,96 +362,99 @@ private fun ClauseDetailPage(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Clause card
+            // Clause card with beadwork accent on left
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 color = Color.White,
                 shadowElevation = 2.dp
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp)
-                ) {
-                    // Article number and bookmark row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Text(
-                            text = "${dailyContent.articleNumber}",
-                            style = MaterialTheme.typography.displayLarge,
-                            fontWeight = FontWeight.Light,
-                            color = Color(0xFFD3D3D3) // Light grey
-                        )
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = "Bookmark",
-                            tint = Color(0xFFC0C0C0),
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Quote text
-                    Text(
-                        text = "\"${dailyContent.clause.text}\"",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Black,
-                        lineHeight = 28.sp,
-                        textAlign = TextAlign.Start
-                    )
-
-                    // Sub-clauses if any
-                    if (dailyContent.clause.subClauses.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        dailyContent.clause.subClauses.forEach { subClause ->
-                            Text(
-                                text = "(${subClause.label}) ${subClause.text}",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.Black,
-                                lineHeight = 28.sp,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Small decorative line (Kenya flag colors)
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                Row {
+                    // Beadwork accent line on left side (Kenya flag colors)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        modifier = Modifier.padding(start = 0.dp, top = 24.dp, bottom = 24.dp)
                     ) {
                         Box(
                             modifier = Modifier
-                                .width(30.dp)
-                                .height(3.dp)
+                                .width(4.dp)
+                                .weight(1f)
                                 .background(KatibaColors.KenyaBlack)
                         )
                         Box(
                             modifier = Modifier
-                                .width(30.dp)
-                                .height(3.dp)
+                                .width(4.dp)
+                                .weight(1f)
                                 .background(KatibaColors.KenyaRed)
                         )
                         Box(
                             modifier = Modifier
-                                .width(30.dp)
-                                .height(3.dp)
+                                .width(4.dp)
+                                .weight(1f)
                                 .background(KatibaColors.KenyaGreen)
                         )
                     }
+                    
+                    Column(
+                        modifier = Modifier.padding(start = 20.dp, end = 24.dp, top = 24.dp, bottom = 24.dp)
+                    ) {
+                        // Article number and bookmark row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Text(
+                                text = "${dailyContent.articleNumber}",
+                                style = MaterialTheme.typography.displayLarge,
+                                fontWeight = FontWeight.Light,
+                                color = Color(0xFFD3D3D3) // Light grey
+                            )
+                            Icon(
+                                imageVector = if (isBookmarked) BookmarkFilledIcon else BookmarkBorderIcon,
+                                contentDescription = "Bookmark",
+                                tint = if (isBookmarked) Color(0xFFFFD700) else Color(0xFFC0C0C0),
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clickable { isBookmarked = !isBookmarked }
+                            )
+                        }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
-                    // Constitution source
-                    Text(
-                        text = "Constitution of Kenya, 2010",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
+                        // Quote text
+                        Text(
+                            text = "\"${dailyContent.clause.text}\"",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color.Black,
+                            lineHeight = 28.sp,
+                            textAlign = TextAlign.Start
+                        )
+
+                        // Sub-clauses if any
+                        if (dailyContent.clause.subClauses.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            dailyContent.clause.subClauses.forEach { subClause ->
+                                Text(
+                                    text = "(${subClause.label}) ${subClause.text}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.Black,
+                                    lineHeight = 28.sp,
+                                    textAlign = TextAlign.Start,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Constitution source
+                        Text(
+                            text = "Constitution of Kenya, 2010",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                    }
                 }
             }
 
@@ -532,35 +508,12 @@ private fun VideoPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(KatibaColors.KenyaBlack)
     ) {
-        // Kenya shield watermark
-        Image(
-            painter = painterResource(Res.drawable.kenya_shield),
-            contentDescription = null,
-            modifier = Modifier
-                .size(300.dp)
-                .align(Alignment.BottomEnd)
-                .offset(x = 40.dp, y = 40.dp)
-                .rotate(-30f)
-                .alpha(0.08f),
-            contentScale = ContentScale.Fit
-        )
-        
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 60.dp) // Reduced for minimal header
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 20.dp)
-        ) {
-        // Video player placeholder
+        // Full screen video player placeholder
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(9f / 16f)
-                .clip(RoundedCornerShape(16.dp))
-                .background(KatibaColors.KenyaBlack),
+                .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -601,44 +554,65 @@ private fun VideoPage(
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Educator info
+        
+        // Publisher info at the bottom (TikTok/Instagram style)
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 16.dp, vertical = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Avatar placeholder
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(KatibaColors.KenyaGreen),
-                contentAlignment = Alignment.Center
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Avatar
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(KatibaColors.KenyaGreen),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = educatorName.first().toString(),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Column {
+                    Text(
+                        text = educatorName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "Civic Educator",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                }
+            }
+            
+            // Follow button
+            Surface(
+                color = Color.Transparent,
+                shape = RoundedCornerShape(6.dp),
+                border = BorderStroke(1.dp, Color.White)
             ) {
                 Text(
-                    text = educatorName.first().toString(),
-                    style = MaterialTheme.typography.titleMedium,
+                    text = "Follow",
+                    style = MaterialTheme.typography.labelMedium,
                     color = Color.White,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
                 )
             }
-
-            Column {
-                Text(
-                    text = educatorName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "Civic Educator",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
         }
     }
 }
@@ -712,3 +686,58 @@ private fun InspirationPage(
         }
     }
 }
+
+/**
+ * Bookmark filled icon
+ */
+private val BookmarkFilledIcon: ImageVector
+    get() = ImageVector.Builder(
+        name = "BookmarkFilled",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(fill = SolidColor(Color.Black)) {
+            moveTo(17f, 3f)
+            horizontalLineTo(7f)
+            curveTo(5.9f, 3f, 5f, 3.9f, 5f, 5f)
+            verticalLineTo(21f)
+            lineTo(12f, 18f)
+            lineTo(19f, 21f)
+            verticalLineTo(5f)
+            curveTo(19f, 3.9f, 18.1f, 3f, 17f, 3f)
+            close()
+        }
+    }.build()
+
+/**
+ * Bookmark border/outline icon
+ */
+private val BookmarkBorderIcon: ImageVector
+    get() = ImageVector.Builder(
+        name = "BookmarkBorder",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(fill = SolidColor(Color.Black)) {
+            moveTo(17f, 3f)
+            horizontalLineTo(7f)
+            curveTo(5.9f, 3f, 5f, 3.9f, 5f, 5f)
+            verticalLineTo(21f)
+            lineTo(12f, 18f)
+            lineTo(19f, 21f)
+            verticalLineTo(5f)
+            curveTo(19f, 3.9f, 18.1f, 3f, 17f, 3f)
+            close()
+            moveTo(17f, 18f)
+            lineTo(12f, 15.82f)
+            lineTo(7f, 18f)
+            verticalLineTo(5f)
+            horizontalLineTo(17f)
+            verticalLineTo(18f)
+            close()
+        }
+    }.build()
