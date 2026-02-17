@@ -1,9 +1,11 @@
 package com.katiba.app.ui.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -36,7 +38,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -50,7 +51,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.katiba.app.data.api.AuthApiClient
 import com.katiba.app.ui.theme.KatibaColors
+import katiba.composeapp.generated.resources.Res
+import katiba.composeapp.generated.resources.app_icon
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun SignUpScreen(
@@ -69,161 +73,183 @@ fun SignUpScreen(
     val coroutineScope = rememberCoroutineScope()
     val authApiClient = remember { AuthApiClient() }
 
+    // Interaction sources for tracking focus state
+    val fullNameInteractionSource = remember { MutableInteractionSource() }
+    val emailInteractionSource = remember { MutableInteractionSource() }
+    val passwordInteractionSource = remember { MutableInteractionSource() }
+    val confirmPasswordInteractionSource = remember { MutableInteractionSource() }
+    val isFullNameFocused by fullNameInteractionSource.collectIsFocusedAsState()
+    val isEmailFocused by emailInteractionSource.collectIsFocusedAsState()
+    val isPasswordFocused by passwordInteractionSource.collectIsFocusedAsState()
+    val isConfirmPasswordFocused by confirmPasswordInteractionSource.collectIsFocusedAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Kenyan flag gradient stripe at the top
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            KatibaColors.KenyaBlack,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaWhite,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaBlack
-                        )
-                    )
-                )
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // App icon
+        Image(
+            painter = painterResource(Res.drawable.app_icon),
+            contentDescription = "Katiba App Icon",
+            modifier = Modifier.size(70.dp)
         )
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-            // App logo / name
-            Text(
-                text = "📜",
-                fontSize = 56.sp,
-                textAlign = TextAlign.Center
-            )
+        Text(
+            text = "Join Katiba",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            color = KatibaColors.KenyaGreen
+        )
 
-            Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Start your civic education journey",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
-            Text(
-                text = "Join Katiba",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = KatibaColors.KenyaGreen
-            )
+        Spacer(modifier = Modifier.height(82.dp)) // 32dp + 50dp for moving form down
 
-            Text(
-                text = "Start your civic education journey",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Full name field
-            OutlinedTextField(
-                value = fullName,
-                onValueChange = { fullName = it },
-                label = { Text("Full Name") },
-                placeholder = { Text("Enter your full name") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = KatibaColors.KenyaGreen,
-                    focusedLabelColor = KatibaColors.KenyaGreen,
-                    cursorColor = KatibaColors.KenyaGreen
+        // Full name field with user icon
+        OutlinedTextField(
+            value = fullName,
+            onValueChange = { fullName = it },
+            label = { Text("Full Name") },
+            placeholder = { Text("Enter your full name") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            interactionSource = fullNameInteractionSource,
+            leadingIcon = {
+                Icon(
+                    imageVector = UserIcon,
+                    contentDescription = "Full Name",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isFullNameFocused) KatibaColors.KenyaGreen else Color.Gray
                 )
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = KatibaColors.KenyaGreen,
+                focusedLabelColor = KatibaColors.KenyaGreen,
+                cursorColor = KatibaColors.KenyaGreen
             )
+        )
 
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-            // Email field
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                placeholder = { Text("Enter your email") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = KatibaColors.KenyaGreen,
-                    focusedLabelColor = KatibaColors.KenyaGreen,
-                    cursorColor = KatibaColors.KenyaGreen
+        // Email field with mail icon
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            placeholder = { Text("Enter your email") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            singleLine = true,
+            interactionSource = emailInteractionSource,
+            leadingIcon = {
+                Icon(
+                    imageVector = MailIcon,
+                    contentDescription = "Email",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isEmailFocused) KatibaColors.KenyaGreen else Color.Gray
                 )
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = KatibaColors.KenyaGreen,
+                focusedLabelColor = KatibaColors.KenyaGreen,
+                cursorColor = KatibaColors.KenyaGreen
             )
+        )
 
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-            // Password field
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                placeholder = { Text("Create a password") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) EyeOffIcon else EyeIcon,
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = KatibaColors.KenyaGreen,
-                    focusedLabelColor = KatibaColors.KenyaGreen,
-                    cursorColor = KatibaColors.KenyaGreen
+        // Password field with lock icon
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            placeholder = { Text("Create a password") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            interactionSource = passwordInteractionSource,
+            leadingIcon = {
+                Icon(
+                    imageVector = LockIcon,
+                    contentDescription = "Password",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isPasswordFocused) KatibaColors.KenyaGreen else Color.Gray
                 )
+            },
+            trailingIcon = {
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        imageVector = if (passwordVisible) EyeOffIcon else EyeIcon,
+                        contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = KatibaColors.KenyaGreen,
+                focusedLabelColor = KatibaColors.KenyaGreen,
+                cursorColor = KatibaColors.KenyaGreen
             )
+        )
 
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-            // Confirm password field
-            OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
-                label = { Text("Confirm Password") },
-                placeholder = { Text("Re-enter your password") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                        Icon(
-                            imageVector = if (confirmPasswordVisible) EyeOffIcon else EyeIcon,
-                            contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = KatibaColors.KenyaGreen,
-                    focusedLabelColor = KatibaColors.KenyaGreen,
-                    cursorColor = KatibaColors.KenyaGreen
+        // Confirm password field with lock icon
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            label = { Text("Confirm Password") },
+            placeholder = { Text("Re-enter your password") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            interactionSource = confirmPasswordInteractionSource,
+            leadingIcon = {
+                Icon(
+                    imageVector = LockIcon,
+                    contentDescription = "Confirm Password",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isConfirmPasswordFocused) KatibaColors.KenyaGreen else Color.Gray
                 )
+            },
+            trailingIcon = {
+                IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                    Icon(
+                        imageVector = if (confirmPasswordVisible) EyeOffIcon else EyeIcon,
+                        contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = KatibaColors.KenyaGreen,
+                focusedLabelColor = KatibaColors.KenyaGreen,
+                cursorColor = KatibaColors.KenyaGreen
             )
+        )
 
-            Spacer(modifier = Modifier.height(28.dp))
-            
+        Spacer(modifier = Modifier.height(28.dp))
+
             // Error message
             if (errorMessage != null) {
                 Text(
@@ -360,11 +386,13 @@ fun SignUpScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-        }
     }
 }
 
-// Reuse eye icons from LoginScreen (internal visibility)
+// ─── Custom Vector Icons ────────────────────────────────────────────────────
+
+// Note: UserIcon, MailIcon, and LockIcon are reused from LoginScreen.kt (defined as internal)
+
 private val EyeIcon: ImageVector
     get() = ImageVector.Builder(
         name = "Eye", defaultWidth = 24.dp, defaultHeight = 24.dp,

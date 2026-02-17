@@ -1,7 +1,10 @@
 package com.katiba.app.ui.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +37,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -43,10 +45,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.katiba.app.ui.theme.KatibaColors
+import katiba.composeapp.generated.resources.Res
+import katiba.composeapp.generated.resources.app_icon
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun LoginScreen(
@@ -59,95 +63,95 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
+    // Interaction sources for tracking focus state
+    val emailInteractionSource = remember { MutableInteractionSource() }
+    val passwordInteractionSource = remember { MutableInteractionSource() }
+    val isEmailFocused by emailInteractionSource.collectIsFocusedAsState()
+    val isPasswordFocused by passwordInteractionSource.collectIsFocusedAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Kenyan flag gradient stripe at the top
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            KatibaColors.KenyaBlack,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaWhite,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaBlack
-                        )
-                    )
-                )
+        Spacer(modifier = Modifier.height(48.dp))
+
+        // App icon
+        Image(
+            painter = painterResource(Res.drawable.app_icon),
+            contentDescription = "Katiba App Icon",
+            modifier = Modifier.size(80.dp)
         )
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-            // App logo / name
-            Text(
-                text = "📜",
-                fontSize = 64.sp,
-                textAlign = TextAlign.Center
-            )
+        Text(
+            text = "Katiba",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            color = KatibaColors.KenyaGreen
+        )
 
-            Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Welcome back, Mzalendo",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
-            Text(
-                text = "Katiba",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = KatibaColors.KenyaGreen
-            )
+        Spacer(modifier = Modifier.height(90.dp)) // 40dp + 50dp for moving form down
 
-            Text(
-                text = "Welcome back, Mzalendo",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // Email field
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                placeholder = { Text("Enter your email") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = KatibaColors.KenyaGreen,
-                    focusedLabelColor = KatibaColors.KenyaGreen,
-                    cursorColor = KatibaColors.KenyaGreen
+        // Email field with mail icon
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email") },
+            placeholder = { Text("Enter your email") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            singleLine = true,
+            interactionSource = emailInteractionSource,
+            leadingIcon = {
+                Icon(
+                    imageVector = MailIcon,
+                    contentDescription = "Email",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isEmailFocused) KatibaColors.KenyaGreen else Color.Gray
                 )
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = KatibaColors.KenyaGreen,
+                focusedLabelColor = KatibaColors.KenyaGreen,
+                cursorColor = KatibaColors.KenyaGreen
             )
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            // Password field
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                placeholder = { Text("Enter your password") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
+        // Password field with lock icon
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            placeholder = { Text("Enter your password") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            interactionSource = passwordInteractionSource,
+            leadingIcon = {
+                Icon(
+                    imageVector = LockIcon,
+                    contentDescription = "Password",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isPasswordFocused) KatibaColors.KenyaGreen else Color.Gray
+                )
+            },
+            trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             imageVector = if (passwordVisible) EyeOffIcon else EyeIcon,
@@ -267,11 +271,88 @@ fun LoginScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-        }
     }
 }
 
 // ─── Custom Vector Icons ────────────────────────────────────────────────────
+
+// Mail icon for email field
+internal val MailIcon: ImageVector
+    get() = ImageVector.Builder(
+        name = "Mail", defaultWidth = 24.dp, defaultHeight = 24.dp,
+        viewportWidth = 24f, viewportHeight = 24f
+    ).apply {
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(4f, 4f)
+            horizontalLineTo(20f)
+            curveTo(21.1f, 4f, 22f, 4.9f, 22f, 6f)
+            verticalLineTo(18f)
+            curveTo(22f, 19.1f, 21.1f, 20f, 20f, 20f)
+            horizontalLineTo(4f)
+            curveTo(2.9f, 20f, 2f, 19.1f, 2f, 18f)
+            verticalLineTo(6f)
+            curveTo(2f, 4.9f, 2.9f, 4f, 4f, 4f)
+            close()
+        }
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(22f, 6f)
+            lineTo(12f, 13f)
+            lineTo(2f, 6f)
+        }
+    }.build()
+
+// Lock icon for password field
+internal val LockIcon: ImageVector
+    get() = ImageVector.Builder(
+        name = "Lock", defaultWidth = 24.dp, defaultHeight = 24.dp,
+        viewportWidth = 24f, viewportHeight = 24f
+    ).apply {
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(19f, 11f)
+            horizontalLineTo(5f)
+            curveTo(3.9f, 11f, 3f, 11.9f, 3f, 13f)
+            verticalLineTo(20f)
+            curveTo(3f, 21.1f, 3.9f, 22f, 5f, 22f)
+            horizontalLineTo(19f)
+            curveTo(20.1f, 22f, 21f, 21.1f, 21f, 20f)
+            verticalLineTo(13f)
+            curveTo(21f, 11.9f, 20.1f, 11f, 19f, 11f)
+            close()
+        }
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(7f, 11f)
+            verticalLineTo(7f)
+            curveTo(7f, 4.24f, 9.24f, 2f, 12f, 2f)
+            curveTo(14.76f, 2f, 17f, 4.24f, 17f, 7f)
+            verticalLineTo(11f)
+        }
+    }.build()
+
+// User icon for name field
+internal val UserIcon: ImageVector
+    get() = ImageVector.Builder(
+        name = "User", defaultWidth = 24.dp, defaultHeight = 24.dp,
+        viewportWidth = 24f, viewportHeight = 24f
+    ).apply {
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(20f, 21f)
+            verticalLineTo(19f)
+            curveTo(20f, 17.94f, 19.58f, 16.92f, 18.83f, 16.17f)
+            curveTo(18.08f, 15.42f, 17.06f, 15f, 16f, 15f)
+            horizontalLineTo(8f)
+            curveTo(6.94f, 15f, 5.92f, 15.42f, 5.17f, 16.17f)
+            curveTo(4.42f, 16.92f, 4f, 17.94f, 4f, 19f)
+            verticalLineTo(21f)
+        }
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(12f, 11f)
+            curveTo(14.21f, 11f, 16f, 9.21f, 16f, 7f)
+            curveTo(16f, 4.79f, 14.21f, 3f, 12f, 3f)
+            curveTo(9.79f, 3f, 8f, 4.79f, 8f, 7f)
+            curveTo(8f, 9.21f, 9.79f, 11f, 12f, 11f)
+            close()
+        }
+    }.build()
 
 private val EyeIcon: ImageVector
     get() = ImageVector.Builder(

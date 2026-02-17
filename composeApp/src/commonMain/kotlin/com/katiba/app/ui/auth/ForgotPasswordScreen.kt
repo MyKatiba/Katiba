@@ -1,9 +1,11 @@
 package com.katiba.app.ui.auth
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,7 +35,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -47,8 +48,10 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
 import com.katiba.app.data.api.AuthApiClient
 import com.katiba.app.ui.theme.KatibaColors
-import kotlinx.coroutines.delay
+import katiba.composeapp.generated.resources.Res
+import katiba.composeapp.generated.resources.kenya_shield
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 
 enum class ForgotPasswordStep {
     EMAIL_ENTRY,
@@ -80,41 +83,17 @@ fun ForgotPasswordScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Kenyan flag gradient stripe at the top
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            KatibaColors.KenyaBlack,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaWhite,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaBlack
-                        )
-                    )
-                )
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
             Spacer(modifier = Modifier.height(48.dp))
 
-            // App logo / name
-            Text(
-                text = "📜",
-                fontSize = 64.sp,
-                textAlign = TextAlign.Center
+            // App icon
+            Image(
+                painter = painterResource(Res.drawable.kenya_shield),
+                contentDescription = "Katiba App Icon",
+                modifier = Modifier.size(80.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -152,7 +131,7 @@ fun ForgotPasswordScreen(
                 modifier = Modifier.padding(top = 8.dp)
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(90.dp)) // 40dp + 50dp for moving form down
 
             // Error message
             if (errorMessage != null) {
@@ -309,7 +288,6 @@ fun ForgotPasswordScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-        }
     }
 }
 
@@ -321,6 +299,9 @@ private fun EmailEntryStep(
     onSendOTP: () -> Unit,
     onBackToLogin: () -> Unit
 ) {
+    val emailInteractionSource = remember { MutableInteractionSource() }
+    val isEmailFocused by emailInteractionSource.collectIsFocusedAsState()
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -335,6 +316,15 @@ private fun EmailEntryStep(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             singleLine = true,
             enabled = !isLoading,
+            interactionSource = emailInteractionSource,
+            leadingIcon = {
+                Icon(
+                    imageVector = MailIcon,
+                    contentDescription = "Email",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isEmailFocused) KatibaColors.KenyaGreen else Color.Gray
+                )
+            },
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = KatibaColors.KenyaGreen,
                 focusedLabelColor = KatibaColors.KenyaGreen,
@@ -620,6 +610,8 @@ private fun NewPasswordStep(
 }
 
 // ─── Custom Vector Icons ────────────────────────────────────────────────────
+
+// Note: MailIcon is reused from LoginScreen.kt (defined as internal)
 
 private val EyeIcon: ImageVector
     get() = ImageVector.Builder(

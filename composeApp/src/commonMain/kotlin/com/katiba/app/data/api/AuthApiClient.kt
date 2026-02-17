@@ -14,24 +14,26 @@ import kotlinx.serialization.json.Json
  * API client for authentication endpoints
  */
 class AuthApiClient {
-    private val client = HttpClient {
-        install(ContentNegotiation) {
-            json(Json {
-                prettyPrint = true
-                isLenient = true
-                ignoreUnknownKeys = true
-            })
-        }
-        
-        install(HttpTimeout) {
-            requestTimeoutMillis = 30000
-            connectTimeoutMillis = 30000
-            socketTimeoutMillis = 30000
-        }
-        
-        defaultRequest {
-            url(ApiConfig.BASE_URL)
-            contentType(ContentType.Application.Json)
+    private val client by lazy {
+        HttpClient {
+            install(ContentNegotiation) {
+                json(Json {
+                    prettyPrint = true
+                    isLenient = true
+                    ignoreUnknownKeys = true
+                })
+            }
+
+            install(HttpTimeout) {
+                requestTimeoutMillis = 30000
+                connectTimeoutMillis = 30000
+                socketTimeoutMillis = 30000
+            }
+
+            defaultRequest {
+                url(ApiConfig.BASE_URL)
+                contentType(ContentType.Application.Json)
+            }
         }
     }
     

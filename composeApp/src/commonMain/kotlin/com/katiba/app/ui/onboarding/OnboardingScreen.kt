@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -87,22 +86,17 @@ fun OnboardingScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val currentPage = pagerState.currentPage
-    val currentAccent by animateColorAsState(
-        targetValue = onboardingPages[currentPage].accentColor,
-        animationSpec = tween(400)
-    )
 
-    Column(
+    // Use Box to allow full-screen image with overlaid buttons
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Pager content takes most of the screen (no Kenya flag border)
+        // Pager content fills the entire screen
         HorizontalPager(
             state = pagerState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
+            modifier = Modifier.fillMaxSize()
         ) { pageIndex ->
             OnboardingPageContent(
                 page = onboardingPages[pageIndex],
@@ -110,10 +104,11 @@ fun OnboardingScreen(
             )
         }
 
-        // Bottom section: page indicator + button (overlaid on the pager)
+        // Bottom section: page indicator + button (overlaid on the full-screen pager)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .align(Alignment.BottomCenter)
                 .padding(horizontal = 32.dp)
                 .padding(bottom = 48.dp),
             contentAlignment = Alignment.Center
@@ -158,8 +153,8 @@ fun OnboardingScreen(
                             .height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = currentAccent
+                            containerColor = KatibaColors.KenyaGreen,
+                            contentColor = Color.White
                         )
                     ) {
                         Text(
@@ -182,8 +177,8 @@ fun OnboardingScreen(
                             .height(56.dp),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color.White,
-                            contentColor = currentAccent
+                            containerColor = KatibaColors.KenyaGreen,
+                            contentColor = Color.White
                         )
                     ) {
                         Text(
@@ -232,13 +227,13 @@ private fun OnboardingPageContent(
                 )
         )
 
-        // Text content at the bottom
+        // Text content at the bottom (above the overlaid buttons)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 32.dp)
-                .padding(bottom = 32.dp),
+                .padding(bottom = 160.dp), // Increased padding to make room for overlaid buttons
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Title

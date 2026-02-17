@@ -139,6 +139,21 @@
 }
 
 # =====================================
+# Ktor Client
+# =====================================
+# Keep Ktor client classes
+-keep class io.ktor.** { *; }
+-keepclassmembers class io.ktor.** { *; }
+-dontwarn io.ktor.**
+
+# Keep Ktor serialization
+-keep class io.ktor.serialization.** { *; }
+
+# Keep Ktor client engines
+-keep class io.ktor.client.engine.** { *; }
+-keep class io.ktor.client.engine.android.** { *; }
+
+# =====================================
 # Optimization Settings
 # =====================================
 # Don't obfuscate classes with @Keep annotation
@@ -152,4 +167,3 @@
 -keepclasseswithmembers class * {
     @androidx.annotation.Keep <init>(...);
 }
-
