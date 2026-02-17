@@ -100,13 +100,13 @@ fun SettingsScreen(
                 
                 SettingsSection(title = "Civic Information") {
                     SettingsItem(
-                        icon = Icons.Default.Badge,
+                        icon = Icons.Default.Person,
                         title = "National ID",
                         subtitle = "Update your national ID number"
                     )
                     HorizontalDivider()
                     SettingsToggleItem(
-                        icon = Icons.Default.HowToVote,
+                        icon = Icons.Default.CheckCircle,
                         title = "Registered Voter",
                         subtitle = if (isRegisteredVoter) "You are registered to vote" else "Not registered to vote",
                         checked = isRegisteredVoter,
@@ -134,7 +134,7 @@ fun SettingsScreen(
                     )
                     HorizontalDivider()
                     SettingsToggleItem(
-                        icon = Icons.Default.TrackChanges,
+                        icon = Icons.Default.Notifications,
                         title = "Streak Reminders",
                         subtitle = "Don't break your streak!",
                         checked = true,
@@ -142,7 +142,7 @@ fun SettingsScreen(
                     )
                     HorizontalDivider()
                     SettingsToggleItem(
-                        icon = Icons.Default.Campaign,
+                        icon = Icons.Default.Info,
                         title = "New Content",
                         subtitle = "Be notified of new lessons",
                         checked = false,
@@ -155,19 +155,19 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "Display") {
                     SettingsItem(
-                        icon = Icons.Default.DarkMode,
+                        icon = Icons.Default.Settings,
                         title = "Appearance",
                         subtitle = "Light, Dark, System"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = Icons.Default.TextFields,
+                        icon = Icons.Default.Settings,
                         title = "Font Size",
                         subtitle = "Adjust text size"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = Icons.Default.Language,
+                        icon = Icons.Default.Settings,
                         title = "Language",
                         subtitle = "English"
                     )
@@ -178,13 +178,13 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "About") {
                     SettingsItem(
-                        icon = Icons.Default.MenuBook,
+                        icon = Icons.Default.Info,
                         title = "About Katiba",
                         subtitle = "Learn about the app"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = Icons.Default.Description,
+                        icon = Icons.Default.Info,
                         title = "Terms of Service",
                         subtitle = "Read our terms"
                     )
@@ -196,7 +196,7 @@ fun SettingsScreen(
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        icon = Icons.Default.Chat,
+                        icon = Icons.Default.Email,
                         title = "Send Feedback",
                         subtitle = "Help us improve"
                     )

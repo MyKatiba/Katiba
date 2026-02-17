@@ -19,7 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -493,7 +493,7 @@ private fun ClauseDetailPage(
                 ) {
                     // Yellow lightbulb icon
                     Icon(
-                        imageVector = Icons.Default.Lightbulb,
+                        imageVector = Icons.Default.Info,
                         contentDescription = null,
                         tint = Color(0xFFFFD700), // Bright yellow/gold
                         modifier = Modifier.size(24.dp)
@@ -638,6 +638,7 @@ private fun VideoPage(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
         }
     }
 }

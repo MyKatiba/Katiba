@@ -11,14 +11,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.HowToVote
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -68,6 +67,7 @@ import com.katiba.app.data.service.GoogleSignInService
 import com.katiba.app.ui.auth.LoginScreen
 import com.katiba.app.ui.auth.SignUpScreen
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.datetime.*
 
 /**
  * Profile screen with redesigned layout matching the Kenyan civic app design
@@ -718,8 +718,8 @@ private fun StreakBottomSheet(
             // Week calendar with real streak data
             val weekData = remember { StreakManager.getWeekStreakData() }
             val todayString = remember { 
-                val now = kotlinx.datetime.Clock.System.now()
-                now.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date.toString()
+                val now = Clock.System.now()
+                now.toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
             }
             
             Row(
@@ -1224,7 +1224,7 @@ private fun CivicDataBottomSheet(
             
             // National ID
             DetailRow(
-                icon = Icons.Default.Badge,
+                icon = Icons.Default.Person,
                 label = "National ID",
                 value = userProfile.nationalId.ifEmpty { "Not set" }
             )
@@ -1233,7 +1233,7 @@ private fun CivicDataBottomSheet(
             
             // County
             DetailRow(
-                icon = Icons.Default.AccountBalance,
+                icon = Icons.Default.Place,
                 label = "County",
                 value = userProfile.county.ifEmpty { "Not set" }
             )
@@ -1251,7 +1251,7 @@ private fun CivicDataBottomSheet(
             
             // Ward
             DetailRow(
-                icon = Icons.Default.Map,
+                icon = Icons.Default.Place,
                 label = "Ward",
                 value = userProfile.ward.ifEmpty { "Not set" }
             )
@@ -1282,7 +1282,7 @@ private fun CivicDataBottomSheet(
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.HowToVote,
+                            imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Voter Status",
                             tint = if (userProfile.isRegisteredVoter) KatibaColors.KenyaGreen else Color.Gray,
                             modifier = Modifier.size(24.dp)
