@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.katiba.app.data.model.Badge
 import com.katiba.app.data.model.UserProfile
+import com.katiba.app.data.repository.ArticleReadManager
 import com.katiba.app.data.repository.SampleDataRepository
 import com.katiba.app.data.repository.StreakManager
 import com.katiba.app.ui.theme.KatibaColors
@@ -78,6 +79,7 @@ fun ProfileScreen(
     authRepository: AuthRepository,
     googleSignInService: GoogleSignInService? = null,
     onSettingsClick: () -> Unit,
+    onResumeLesson: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val currentUser by authRepository.currentUser.collectAsState(initial = null)
@@ -132,14 +134,18 @@ fun ProfileScreen(
     val lessons = remember { SampleDataRepository.getLessons() }
     var showCivicDataSheet by remember { mutableStateOf(false) }
     var showStreakSheet by remember { mutableStateOf(false) }
+    var showAchievementsSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
+    val achievementsSheetState = rememberModalBottomSheetState()
 
     // Initialize streak on first composition
     var streakCount by remember { mutableStateOf(0) }
     var bestStreak by remember { mutableStateOf(0) }
+    var articlesReadCount by remember { mutableStateOf(0) }
     LaunchedEffect(Unit) {
         streakCount = StreakManager.checkAndUpdateStreak()
         bestStreak = StreakManager.getBestStreak()
+        articlesReadCount = ArticleReadManager.getArticlesReadCount()
     }
 
     // Calculate current course progress
@@ -151,55 +157,47 @@ fun ProfileScreen(
     // Use a shortened lesson title for display (e.g., "Right to Life" instead of full title)
     val nextLessonDisplay = nextLesson?.title?.removePrefix("Your ")?.removePrefix("The ") ?: "Complete!"
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(KatibaColors.Background)
-    ) {
-        // Top bar with shadow (no border)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(KatibaColors.Background)
-                .shadow(elevation = 2.dp)
-        ) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Profile",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = KatibaColors.KenyaBlack
-                )
-                IconButton(
-                    onClick = {
-                        // Sign out logic
-                         // For now just settings, but we could add a sign out button here or in settings
-                        onSettingsClick()
+    Scaffold(
+        containerColor = KatibaColors.Background,
+        topBar = {
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "Profile",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
                     },
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Settings",
-                        tint = Color.Gray
-                    )
-                }
+                    actions = {
+                        IconButton(
+                            onClick = onSettingsClick,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Settings",
+                                tint = Color.Gray
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background
+                    ),
+                    windowInsets = WindowInsets(0.dp)
+                )
+                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
             }
         }
+    ) { paddingValues ->
 
         // Scrollable content
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
                 .padding(top = 10.dp, bottom = 24.dp),
@@ -218,18 +216,17 @@ fun ProfileScreen(
                     onClick = { showStreakSheet = true },
                     modifier = Modifier.weight(1f)
                 )
-                StatCard(
-                    icon = "📖",
-                    iconBackgroundColor = Color(0xFFBBF7D0), // Green light
-                    value = "45",
-                    label = "ARTICLES READ",
-                    borderColor = KatibaColors.KenyaGreen,
+                ArticlesReadStatCard(
+                    articlesCount = articlesReadCount,
                     modifier = Modifier.weight(1f)
                 )
             }
 
             // Achievements Section
-            AchievementsCard(badges = userProfile.badges)
+            AchievementsCard(
+                badges = userProfile.badges,
+                onClick = { showAchievementsSheet = true }
+            )
 
             // Current Course Section
             CurrentCourseCard(
@@ -237,7 +234,12 @@ fun ProfileScreen(
                 chapterTitle = "The Bill of Rights",
                 completedLessons = completedLessons,
                 totalLessons = totalLessons,
-                nextLessonTitle = nextLessonDisplay
+                nextLessonTitle = nextLessonDisplay,
+                onContinueClick = {
+                    nextLesson?.let { lesson ->
+                        onResumeLesson(lesson.id)
+                    }
+                }
             )
 
             // My Civic Data Section
@@ -263,6 +265,15 @@ fun ProfileScreen(
             onDismiss = { showStreakSheet = false },
             currentStreak = streakCount,
             bestStreak = bestStreak
+        )
+    }
+    
+    // Achievements Bottom Sheet
+    if (showAchievementsSheet) {
+        AchievementsBottomSheet(
+            sheetState = achievementsSheetState,
+            badges = userProfile.badges,
+            onDismiss = { showAchievementsSheet = false }
         )
     }
 }
@@ -309,40 +320,51 @@ private fun ProfileCard(userProfile: UserProfile) {
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Grey abstract background layer
+            // Light gray background with abstract pale white patterns
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF5F5F5))
+                    .background(Color(0xFFE8E8E8)) // Consistent light gray
+                    .clip(RoundedCornerShape(24.dp))
                     .drawBehind {
                         // Draw pale white abstract circles
                         drawCircle(
+                            color = Color.White.copy(alpha = 0.6f),
+                            radius = 120.dp.toPx(),
+                            center = Offset(size.width * 0.9f, size.height * 0.8f)
+                        )
+                        drawCircle(
                             color = Color.White.copy(alpha = 0.5f),
-                            radius = 100.dp.toPx(),
-                            center = Offset(size.width * 0.85f, size.height * 0.7f)
+                            radius = 80.dp.toPx(),
+                            center = Offset(size.width * 0.15f, size.height * 0.25f)
                         )
                         drawCircle(
                             color = Color.White.copy(alpha = 0.4f),
-                            radius = 70.dp.toPx(),
-                            center = Offset(size.width * 0.2f, size.height * 0.3f)
+                            radius = 60.dp.toPx(),
+                            center = Offset(size.width * 0.55f, size.height * 0.15f)
+                        )
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.35f),
+                            radius = 45.dp.toPx(),
+                            center = Offset(size.width * 0.75f, size.height * 0.45f)
                         )
                         drawCircle(
                             color = Color.White.copy(alpha = 0.3f),
-                            radius = 50.dp.toPx(),
-                            center = Offset(size.width * 0.6f, size.height * 0.2f)
+                            radius = 35.dp.toPx(),
+                            center = Offset(size.width * 0.3f, size.height * 0.7f)
+                        )
+                        // Add some wave-like patterns
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.25f),
+                            radius = 100.dp.toPx(),
+                            center = Offset(size.width * 0.0f, size.height * 0.6f)
+                        )
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.2f),
+                            radius = 70.dp.toPx(),
+                            center = Offset(size.width * 1.0f, size.height * 0.2f)
                         )
                     }
-            )
-
-            // Bracelet image overlay filling entire card
-            Image(
-                painter = painterResource(Res.drawable.bracelet),
-                contentDescription = "Kenyan beadwork bracelet",
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(24.dp)),
-                contentScale = ContentScale.Crop,
-                alpha = 0.85f
             )
 
             // Avatar and user info positioned in Row at left
@@ -352,7 +374,7 @@ private fun ProfileCard(userProfile: UserProfile) {
                     .padding(24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Avatar with edit button
+                // Avatar
                 Box(
                     modifier = Modifier.padding(end = 15.dp)
                 ) {
@@ -383,25 +405,6 @@ private fun ProfileCard(userProfile: UserProfile) {
                             color = Color(0xFF8B4513)
                         )
                     }
-
-                    // Edit button
-                    Box(
-                        modifier = Modifier
-                            .size(28.dp)
-                            .align(Alignment.BottomEnd)
-                            .offset(x = 4.dp, y = 4.dp)
-                            .clip(CircleShape)
-                            .background(KatibaColors.KenyaRed)
-                            .border(2.dp, Color.White, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit Profile",
-                            tint = Color.White,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
                 }
 
                 // Name and citizen since text
@@ -412,13 +415,13 @@ private fun ProfileCard(userProfile: UserProfile) {
                         text = userProfile.name,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = KatibaColors.KenyaBlack
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Citizen since ${userProfile.joinedDate}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f),
+                        color = Color.Gray,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -536,31 +539,38 @@ private fun StreakStatCard(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                // Icon - Bolt icon like in homepage
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFFFED7AA)), // Orange light
-                    contentAlignment = Alignment.Center
+                // Top row: Icon and Value
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Icon(
-                        imageVector = if (streakCount > 0) BoltIconFilled else BoltIconOutline,
-                        contentDescription = "Streak",
-                        tint = if (streakCount > 0) Color(0xFFFFD700) else Color.Gray,
-                        modifier = Modifier.size(24.dp)
+                    // Icon - Bolt icon with yellow-50 background
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFFEFCE8)), // Yellow-50
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (streakCount > 0) BoltIconFilled else BoltIconOutline,
+                            contentDescription = "Streak",
+                            tint = if (streakCount > 0) Color(0xFFFFD700) else Color.Gray,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    
+                    // Value on top right
+                    Text(
+                        text = streakCount.toString(),
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = KatibaColors.KenyaBlack
                     )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
-
-                // Value
-                Text(
-                    text = streakCount.toString(),
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = KatibaColors.KenyaBlack
-                )
 
                 // Label
                 Text(
@@ -574,6 +584,115 @@ private fun StreakStatCard(
         }
     }
 }
+
+@Composable
+private fun ArticlesReadStatCard(
+    articlesCount: Int,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(16.dp),
+                spotColor = Color.Black.copy(alpha = 0.05f)
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Left border accent
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(KatibaColors.KenyaGreen)
+                    .align(Alignment.CenterStart)
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                // Top row: Icon and Value
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    // Icon - Book icon with grey-50 background
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFF9FAFB)), // Grey-50
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = BookIcon,
+                            contentDescription = "Articles Read",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    
+                    // Value on top right
+                    Text(
+                        text = articlesCount.toString(),
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = KatibaColors.KenyaBlack
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Label
+                Text(
+                    text = "ARTICLES READ",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Gray,
+                    letterSpacing = 1.sp
+                )
+            }
+        }
+    }
+}
+
+// Book icon for articles read card
+private val BookIcon: ImageVector
+    get() = ImageVector.Builder(
+        name = "Book",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(
+            fill = null,
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 2f,
+            strokeLineCap = StrokeCap.Round
+        ) {
+            // Book spine on left
+            moveTo(4f, 19.5f)
+            verticalLineTo(4.5f)
+            arcTo(2f, 2f, 0f, false, true, 6f, 2.5f)
+            horizontalLineTo(20f)
+            verticalLineTo(22f)
+            horizontalLineTo(6f)
+            arcTo(2f, 2f, 0f, false, true, 4f, 20f)
+            verticalLineTo(19.5f)
+            close()
+            // Book page fold
+            moveTo(4f, 19.5f)
+            horizontalLineTo(20f)
+        }
+    }.build()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -825,10 +944,14 @@ private val BoltIconOutline: ImageVector
     }.build()
 
 @Composable
-private fun AchievementsCard(badges: List<Badge>) {
+private fun AchievementsCard(
+    badges: List<Badge>,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .shadow(
                 elevation = 8.dp,
                 shape = RoundedCornerShape(24.dp),
@@ -848,51 +971,36 @@ private fun AchievementsCard(badges: List<Badge>) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "🏆",
+                        fontSize = 24.sp
+                    )
+                    Text(
+                        text = "Achievements",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = KatibaColors.KenyaBlack
+                    )
+                }
                 Text(
-                    text = "Achievements",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = KatibaColors.KenyaBlack
-                )
-                Text(
-                    text = "View All",
+                    text = "${badges.count { it.isEarned }} earned",
                     style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = KatibaColors.KenyaRed,
-                    modifier = Modifier.clickable { }
+                    color = Color.Gray
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Achievements horizontal scroll
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                AchievementItem(
-                    icon = "🛡️",
-                    name = "Civic\nDefender",
-                    isEarned = true
-                )
-                AchievementItem(
-                    icon = "⚖️",
-                    name = "Rights\nExpert",
-                    isEarned = false
-                )
-                AchievementItem(
-                    icon = "🗳️",
-                    name = "Voter\nReady",
-                    isEarned = false
-                )
-                AchievementItem(
-                    icon = "🎓",
-                    name = "Scholar",
-                    isEarned = false
-                )
-            }
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Brief description
+            Text(
+                text = "Track your civic learning journey and unlock achievements as you progress",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
         }
     }
 }
@@ -954,13 +1062,112 @@ private fun AchievementItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AchievementsBottomSheet(
+    sheetState: SheetState,
+    badges: List<Badge>,
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        containerColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "🏆 Your Achievements",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Text(
+                text = "Unlock badges by completing civic learning milestones",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Achievements grid
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                AchievementItem(
+                    icon = "🛡️",
+                    name = "Civic\nDefender",
+                    isEarned = true
+                )
+                AchievementItem(
+                    icon = "⚖️",
+                    name = "Rights\nExpert",
+                    isEarned = false
+                )
+                AchievementItem(
+                    icon = "🗳️",
+                    name = "Voter\nReady",
+                    isEarned = false
+                )
+                AchievementItem(
+                    icon = "🎓",
+                    name = "Scholar",
+                    isEarned = false
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Additional achievements row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                AchievementItem(
+                    icon = "🔥",
+                    name = "7 Day\nStreak",
+                    isEarned = false
+                )
+                AchievementItem(
+                    icon = "📚",
+                    name = "10 Articles\nRead",
+                    isEarned = false
+                )
+                AchievementItem(
+                    icon = "🌟",
+                    name = "First\nLesson",
+                    isEarned = true
+                )
+                AchievementItem(
+                    icon = "🎯",
+                    name = "Chapter\nComplete",
+                    isEarned = false
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
 @Composable
 private fun CurrentCourseCard(
     chapterNumber: Int,
     chapterTitle: String,
     completedLessons: Int,
     totalLessons: Int,
-    nextLessonTitle: String
+    nextLessonTitle: String,
+    onContinueClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -1071,7 +1278,7 @@ private fun CurrentCourseCard(
                 )
 
                 Button(
-                    onClick = { },
+                    onClick = onContinueClick,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = KatibaColors.KenyaRed
                     ),

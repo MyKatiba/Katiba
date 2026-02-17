@@ -29,6 +29,15 @@ import com.katiba.app.ui.plans.LessonScreen
 import com.katiba.app.ui.plans.PlansScreen
 import com.katiba.app.ui.profile.ProfileScreen
 import com.katiba.app.ui.profile.SettingsScreen
+import com.katiba.app.ui.profile.EditProfileScreen
+import com.katiba.app.ui.profile.PasswordSecurityScreen
+import com.katiba.app.ui.profile.UpdateResidenceScreen
+import com.katiba.app.ui.profile.NationalIDScreen
+import com.katiba.app.ui.profile.AppearanceScreen
+import com.katiba.app.ui.profile.FontSizeScreen
+import com.katiba.app.ui.profile.LanguageScreen
+import com.katiba.app.ui.profile.AboutKatibaScreen
+import com.katiba.app.ui.profile.SendFeedbackScreen
 import com.katiba.app.ui.theme.KatibaTheme
 import katiba.composeapp.generated.resources.Res
 import kotlinx.coroutines.Dispatchers
@@ -450,6 +459,9 @@ private fun AppContent(
                             googleSignInService = googleSignInService,
                             onSettingsClick = {
                                 backStack.add(SettingsRoute)
+                            },
+                            onResumeLesson = { lessonId ->
+                                backStack.add(LessonRoute(lessonId))
                             }
                         )
                     }
@@ -465,7 +477,79 @@ private fun AppContent(
                                     backStack.clear()
                                     backStack.add(ProfileRoute)
                                 }
-                            }
+                            },
+                            onEditProfile = { backStack.add(EditProfileRoute) },
+                            onPasswordSecurity = { backStack.add(PasswordSecurityRoute) },
+                            onUpdateResidence = { backStack.add(UpdateResidenceRoute) },
+                            onNationalID = { backStack.add(NationalIDRoute) },
+                            onAppearance = { backStack.add(AppearanceRoute) },
+                            onFontSize = { backStack.add(FontSizeRoute) },
+                            onLanguage = { backStack.add(LanguageRoute) },
+                            onAboutKatiba = { backStack.add(AboutKatibaRoute) },
+                            onSendFeedback = { backStack.add(SendFeedbackRoute) }
+                        )
+                    }
+
+                    // Settings Edit Screens
+                    entry<EditProfileRoute> {
+                        EditProfileScreen(
+                            onBackClick = { backStack.removeLast() },
+                            onSave = { _, _ -> backStack.removeLast() }
+                        )
+                    }
+
+                    entry<PasswordSecurityRoute> {
+                        PasswordSecurityScreen(
+                            onBackClick = { backStack.removeLast() },
+                            onChangePassword = { _, _ -> backStack.removeLast() }
+                        )
+                    }
+
+                    entry<UpdateResidenceRoute> {
+                        UpdateResidenceScreen(
+                            onBackClick = { backStack.removeLast() },
+                            onSave = { _, _, _ -> backStack.removeLast() }
+                        )
+                    }
+
+                    entry<NationalIDRoute> {
+                        NationalIDScreen(
+                            onBackClick = { backStack.removeLast() },
+                            onSave = { _ -> backStack.removeLast() }
+                        )
+                    }
+
+                    entry<AppearanceRoute> {
+                        AppearanceScreen(
+                            onBackClick = { backStack.removeLast() },
+                            onThemeChange = { _ -> }
+                        )
+                    }
+
+                    entry<FontSizeRoute> {
+                        FontSizeScreen(
+                            onBackClick = { backStack.removeLast() },
+                            onFontSizeChange = { _ -> }
+                        )
+                    }
+
+                    entry<LanguageRoute> {
+                        LanguageScreen(
+                            onBackClick = { backStack.removeLast() },
+                            onLanguageChange = { _ -> }
+                        )
+                    }
+
+                    entry<AboutKatibaRoute> {
+                        AboutKatibaScreen(
+                            onBackClick = { backStack.removeLast() }
+                        )
+                    }
+
+                    entry<SendFeedbackRoute> {
+                        SendFeedbackScreen(
+                            onBackClick = { backStack.removeLast() },
+                            onSubmit = { _ -> backStack.removeLast() }
                         )
                     }
                 }

@@ -1071,7 +1071,7 @@ private fun LearningProgressCard(
                         text = currentLesson.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black,
+                        color = Color.White,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -1080,7 +1080,7 @@ private fun LearningProgressCard(
                     Text(
                         text = currentLesson.description,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
+                        color = Color.White,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )

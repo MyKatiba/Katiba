@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.katiba.app.data.model.Article
 import com.katiba.app.data.model.Chapter
 import com.katiba.app.data.model.Clause
+import com.katiba.app.data.repository.ArticleReadManager
 import com.katiba.app.data.repository.ConstitutionRepository
 import com.katiba.app.ui.theme.KatibaColors
 
@@ -49,6 +50,11 @@ fun ReadingScreen(
     }
     val article = remember(chapterNumber, articleNumber) {
         chapter?.articles?.find { it.number == articleNumber }
+    }
+    
+    // Track article read
+    LaunchedEffect(chapterNumber, articleNumber) {
+        ArticleReadManager.recordArticleRead(chapterNumber, articleNumber)
     }
     
     val scrollState = rememberScrollState()

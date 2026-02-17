@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.katiba.app.data.repository.ArticleReadManager
 import com.katiba.app.data.repository.ConstitutionRepository
 import com.katiba.app.ui.theme.KatibaColors
 import kotlinx.serialization.json.*
@@ -31,6 +32,11 @@ fun ScheduleDetailScreen(
 ) {
     val schedule = remember { ConstitutionRepository.getSchedule(scheduleNumber) }
     val scrollState = rememberScrollState()
+    
+    // Track schedule read
+    LaunchedEffect(scheduleNumber) {
+        ArticleReadManager.recordScheduleRead(scheduleNumber)
+    }
 
     if (schedule == null) {
         // Schedule not found

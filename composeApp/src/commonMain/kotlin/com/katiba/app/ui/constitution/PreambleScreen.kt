@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.katiba.app.data.repository.ArticleReadManager
 import com.katiba.app.ui.theme.KatibaColors
 
 /**
@@ -31,6 +32,11 @@ fun PreambleScreen(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    
+    // Track preamble read
+    LaunchedEffect(Unit) {
+        ArticleReadManager.recordPreambleRead()
+    }
 
     Scaffold(
         topBar = {

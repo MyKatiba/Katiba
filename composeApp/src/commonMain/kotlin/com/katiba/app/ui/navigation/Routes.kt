@@ -92,6 +92,34 @@ data object NotificationsRoute : NavKey
 @Serializable
 data object MzalendoRoute : NavKey
 
+// Settings edit screens
+@Serializable
+data object EditProfileRoute : NavKey
+
+@Serializable
+data object PasswordSecurityRoute : NavKey
+
+@Serializable
+data object UpdateResidenceRoute : NavKey
+
+@Serializable
+data object NationalIDRoute : NavKey
+
+@Serializable
+data object AppearanceRoute : NavKey
+
+@Serializable
+data object FontSizeRoute : NavKey
+
+@Serializable
+data object LanguageRoute : NavKey
+
+@Serializable
+data object AboutKatibaRoute : NavKey
+
+@Serializable
+data object SendFeedbackRoute : NavKey
+
 /**
  * SerializersModule for KMP state preservation
  * Required for iOS/Native targets where reflection is not available
@@ -122,5 +150,14 @@ val navKeySerializersModule = SerializersModule {
         subclass(SettingsRoute::class, SettingsRoute.serializer())
         subclass(NotificationsRoute::class, NotificationsRoute.serializer())
         subclass(MzalendoRoute::class, MzalendoRoute.serializer())
+        subclass(EditProfileRoute::class, EditProfileRoute.serializer())
+        subclass(PasswordSecurityRoute::class, PasswordSecurityRoute.serializer())
+        subclass(UpdateResidenceRoute::class, UpdateResidenceRoute.serializer())
+        subclass(NationalIDRoute::class, NationalIDRoute.serializer())
+        subclass(AppearanceRoute::class, AppearanceRoute.serializer())
+        subclass(FontSizeRoute::class, FontSizeRoute.serializer())
+        subclass(LanguageRoute::class, LanguageRoute.serializer())
+        subclass(AboutKatibaRoute::class, AboutKatibaRoute.serializer())
+        subclass(SendFeedbackRoute::class, SendFeedbackRoute.serializer())
     }
 }
