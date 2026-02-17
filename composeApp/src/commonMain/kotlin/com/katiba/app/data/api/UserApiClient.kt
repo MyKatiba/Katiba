@@ -59,7 +59,7 @@ class UserApiClient {
                 Result.failure(Exception("Session expired. Please login again."))
             } else {
                 val error = response.body<ApiErrorResponse>()
-                Result.failure(Exception(error.message ?: error.error))
+                Result.failure(Exception(error.getErrorMessage()))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -101,7 +101,7 @@ class UserApiClient {
                 Result.failure(Exception("Session expired. Please login again."))
             } else {
                 val error = response.body<ApiErrorResponse>()
-                Result.failure(Exception(error.message ?: error.error))
+                Result.failure(Exception(error.getErrorMessage()))
             }
         } catch (e: Exception) {
             Result.failure(e)

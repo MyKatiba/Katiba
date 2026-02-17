@@ -312,10 +312,16 @@ data class UpdateProfileRequest(
 )
 
 /**
- * API error response
+ * API error response - handles various backend error formats
  */
 @Serializable
 data class ApiErrorResponse(
-    val error: String,
-    val message: String? = null
-)
+    val error: String? = null,
+    val message: String? = null,
+    val success: Boolean? = null
+) {
+    /**
+     * Get the error message from whichever field is available
+     */
+    fun getErrorMessage(): String = message ?: error ?: "An unknown error occurred"
+}

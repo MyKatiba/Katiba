@@ -55,7 +55,7 @@ class AuthApiClient {
             Result.success(response.body<RegisterResponse>())
         } else {
             val error = response.body<ApiErrorResponse>()
-            Result.failure(Exception(error.message ?: error.error))
+            Result.failure(Exception(error.getErrorMessage()))
         }
     } catch (e: Exception) {
         Result.failure(e)
@@ -80,7 +80,7 @@ class AuthApiClient {
             Result.success(verifyResponse)
         } else {
             val error = response.body<ApiErrorResponse>()
-            Result.failure(Exception(error.message ?: error.error))
+            Result.failure(Exception(error.getErrorMessage()))
         }
     } catch (e: Exception) {
         Result.failure(e)
@@ -101,7 +101,7 @@ class AuthApiClient {
             Result.success(response.body<MessageResponse>())
         } else {
             val error = response.body<ApiErrorResponse>()
-            Result.failure(Exception(error.message ?: error.error))
+            Result.failure(Exception(error.getErrorMessage()))
         }
     } catch (e: Exception) {
         Result.failure(e)
@@ -120,7 +120,7 @@ class AuthApiClient {
             Result.success(response.body<ForgotPasswordResponse>())
         } else {
             val error = response.body<ApiErrorResponse>()
-            Result.failure(Exception(error.message ?: error.error))
+            Result.failure(Exception(error.getErrorMessage()))
         }
     } catch (e: Exception) {
         Result.failure(e)
@@ -142,7 +142,7 @@ class AuthApiClient {
             Result.success(response.body<VerifyResetOtpResponse>())
         } else {
             val error = response.body<ApiErrorResponse>()
-            Result.failure(Exception(error.message ?: error.error))
+            Result.failure(Exception(error.getErrorMessage()))
         }
     } catch (e: Exception) {
         Result.failure(e)
@@ -163,7 +163,7 @@ class AuthApiClient {
             Result.success(response.body<MessageResponse>())
         } else {
             val error = response.body<ApiErrorResponse>()
-            Result.failure(Exception(error.message ?: error.error))
+            Result.failure(Exception(error.getErrorMessage()))
         }
     } catch (e: Exception) {
         Result.failure(e)
@@ -187,7 +187,7 @@ class AuthApiClient {
             Result.success(loginResponse)
         } else {
             val error = response.body<ApiErrorResponse>()
-            Result.failure(Exception(error.message ?: error.error))
+            Result.failure(Exception(error.getErrorMessage()))
         }
     } catch (e: Exception) {
         Result.failure(e)
