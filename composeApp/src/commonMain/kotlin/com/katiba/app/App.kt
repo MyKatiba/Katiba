@@ -237,6 +237,10 @@ private fun AppContent(
                                 // Navigate to OTP verification
                                 backStack.add(OTPVerificationRoute(userId, email, "email_verification"))
                             },
+                            onGoogleSignUpSuccess = {
+                                // Google accounts are already verified, skip to civic data
+                                backStack.add(CivicDataInputRoute)
+                            },
                             onNavigateToLogin = {
                                 backStack.removeLast()
                             }

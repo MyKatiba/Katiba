@@ -1,18 +1,29 @@
 package com.katiba.app.ui.auth
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -40,7 +51,7 @@ fun OTPVerificationScreen(
     var canResend by remember { mutableStateOf(false) }
     val focusRequesters = remember { List(6) { FocusRequester() } }
     val coroutineScope = rememberCoroutineScope()
-    
+
     // Countdown timer for resend
     LaunchedEffect(resendCountdown) {
         if (resendCountdown > 0) {
@@ -50,12 +61,12 @@ fun OTPVerificationScreen(
             canResend = true
         }
     }
-    
+
     // Auto-focus first field
     LaunchedEffect(Unit) {
         focusRequesters[0].requestFocus()
     }
-    
+
     val isEmailVerification = purpose == "email_verification"
     val title = if (isEmailVerification) "Verify Your Email" else "Verify OTP"
     val subtitle = if (isEmailVerification) {
@@ -63,49 +74,47 @@ fun OTPVerificationScreen(
     } else {
         "Enter the 6-digit code sent to\n$email"
     }
-    
-    Column(
+
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Kenyan flag gradient stripe
-        Box(
+        // Top-left back button (rounded square)
+        IconButton(
+            onClick = onBackClick,
+            enabled = !isLoading,
             modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            KatibaColors.KenyaBlack,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaWhite,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaBlack
-                        )
-                    )
-                )
-        )
-        
+                .padding(start = 16.dp, top = 16.dp)
+                .align(Alignment.TopStart)
+                .size(44.dp)
+                .shadow(2.dp, RoundedCornerShape(12.dp))
+                .background(Color.White, RoundedCornerShape(12.dp))
+                .border(1.dp, Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+        ) {
+            Icon(
+                imageVector = BackArrowIcon,
+                contentDescription = "Back",
+                modifier = Modifier.size(20.dp),
+                tint = KatibaColors.OnSurface
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(48.dp))
-            
-            // Icon
-            Text(
-                text = "📧",
-                fontSize = 64.sp,
-                textAlign = TextAlign.Center
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
+            // Moved down by ~100dp (original 48 + 100 extra)
+            Spacer(modifier = Modifier.height(148.dp))
+
+            // Animated mail icon
+            AnimatedMailIcon()
+
+            // Increased spacing between icon and title (original 24 + 50 extra)
+            Spacer(modifier = Modifier.height(74.dp))
+
             // Title
             Text(
                 text = title,
@@ -114,9 +123,9 @@ fun OTPVerificationScreen(
                 color = KatibaColors.KenyaGreen,
                 textAlign = TextAlign.Center
             )
-            
+
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             // Subtitle
             Text(
                 text = subtitle,
@@ -124,9 +133,9 @@ fun OTPVerificationScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            
+
             Spacer(modifier = Modifier.height(40.dp))
-            
+
             // OTP Input Fields
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -140,12 +149,12 @@ fun OTPVerificationScreen(
                                 val newDigits = otpDigits.toMutableList()
                                 newDigits[index] = newValue
                                 otpDigits = newDigits
-                                
+
                                 // Auto-focus next field
                                 if (newValue.isNotEmpty() && index < 5) {
                                     focusRequesters[index + 1].requestFocus()
                                 }
-                                
+
                                 // Auto-verify when all filled
                                 if (newDigits.all { it.isNotEmpty() }) {
                                     val otp = newDigits.joinToString("")
@@ -162,7 +171,6 @@ fun OTPVerificationScreen(
                                     }
                                 }
                             } else if (newValue.isEmpty() && index > 0) {
-                                // Handle backspace
                                 val newDigits = otpDigits.toMutableList()
                                 newDigits[index] = ""
                                 otpDigits = newDigits
@@ -186,9 +194,9 @@ fun OTPVerificationScreen(
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Error message
             if (errorMessage != null) {
                 Text(
@@ -200,7 +208,7 @@ fun OTPVerificationScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
-            
+
             // Resend OTP section
             if (canResend) {
                 TextButton(
@@ -210,7 +218,7 @@ fun OTPVerificationScreen(
                             errorMessage = null
                             val result = authRepository.resendOtp(userId, purpose)
                             isLoading = false
-                            
+
                             result.onSuccess {
                                 resendCountdown = 60
                                 canResend = false
@@ -235,67 +243,158 @@ fun OTPVerificationScreen(
                     color = Color.Gray
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
-            // Verify button
-            Button(
-                onClick = {
-                    val otp = otpDigits.joinToString("")
-                    if (otp.length == 6) {
-                        coroutineScope.launch {
-                            verifyOtp(
-                                authRepository,
-                                userId,
-                                otp,
-                                purpose,
-                                onVerificationSuccess,
-                                onError = { errorMessage = it },
-                                onLoadingChange = { isLoading = it }
-                            )
-                        }
-                    } else {
-                        errorMessage = "Please enter all 6 digits"
-                    }
-                },
+
+            // Verify button with solid/physical shadow styling
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                enabled = !isLoading && otpDigits.all { it.isNotEmpty() },
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = KatibaColors.KenyaGreen
-                )
+                    .height(60.dp)
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White
+                // Bottom shadow layer
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            color = KatibaColors.DarkGreen,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                )
+                // Main button
+                Button(
+                    onClick = {
+                        val otp = otpDigits.joinToString("")
+                        if (otp.length == 6) {
+                            coroutineScope.launch {
+                                verifyOtp(
+                                    authRepository,
+                                    userId,
+                                    otp,
+                                    purpose,
+                                    onVerificationSuccess,
+                                    onError = { errorMessage = it },
+                                    onLoadingChange = { isLoading = it }
+                                )
+                            }
+                        } else {
+                            errorMessage = "Please enter all 6 digits"
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .align(Alignment.TopCenter),
+                    enabled = !isLoading && otpDigits.all { it.isNotEmpty() },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = KatibaColors.KenyaGreen
                     )
-                } else {
-                    Text(
-                        text = "Verify",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            text = "Verify",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Back button
-            TextButton(
-                onClick = onBackClick,
-                enabled = !isLoading
-            ) {
-                Text(
-                    text = "Back",
-                    color = Color.Gray
-                )
             }
         }
     }
 }
+
+@Composable
+private fun AnimatedMailIcon() {
+    val infiniteTransition = rememberInfiniteTransition(label = "mail")
+    val bounce by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(800, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bounce"
+    )
+
+    Box(
+        modifier = Modifier.size(80.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .background(
+                    color = KatibaColors.KenyaGreen.copy(alpha = 0.1f),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = MailCheckIcon,
+                contentDescription = "Email Verification",
+                modifier = Modifier
+                    .size(40.dp)
+                    .graphicsLayer { translationY = bounce },
+                tint = KatibaColors.KenyaGreen
+            )
+        }
+    }
+}
+
+// Back arrow icon
+private val BackArrowIcon: ImageVector
+    get() = ImageVector.Builder(
+        name = "BackArrow", defaultWidth = 24.dp, defaultHeight = 24.dp,
+        viewportWidth = 24f, viewportHeight = 24f
+    ).apply {
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(19f, 12f)
+            horizontalLineTo(5f)
+        }
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(12f, 19f)
+            lineTo(5f, 12f)
+            lineTo(12f, 5f)
+        }
+    }.build()
+
+// Mail with check icon
+private val MailCheckIcon: ImageVector
+    get() = ImageVector.Builder(
+        name = "MailCheck", defaultWidth = 24.dp, defaultHeight = 24.dp,
+        viewportWidth = 24f, viewportHeight = 24f
+    ).apply {
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 1.5f) {
+            moveTo(4f, 4f)
+            horizontalLineTo(20f)
+            curveTo(21.1f, 4f, 22f, 4.9f, 22f, 6f)
+            verticalLineTo(18f)
+            curveTo(22f, 19.1f, 21.1f, 20f, 20f, 20f)
+            horizontalLineTo(4f)
+            curveTo(2.9f, 20f, 2f, 19.1f, 2f, 18f)
+            verticalLineTo(6f)
+            curveTo(2f, 4.9f, 2.9f, 4f, 4f, 4f)
+            close()
+        }
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 1.5f) {
+            moveTo(22f, 6f)
+            lineTo(12f, 13f)
+            lineTo(2f, 6f)
+        }
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(9f, 12f)
+            lineTo(11f, 14f)
+            lineTo(15f, 10f)
+        }
+    }.build()
 
 private suspend fun verifyOtp(
     authRepository: AuthRepository,
@@ -307,23 +406,22 @@ private suspend fun verifyOtp(
     onLoadingChange: (Boolean) -> Unit
 ) {
     onLoadingChange(true)
-    
+
     if (purpose == "email_verification") {
         val result = authRepository.verifyEmail(userId, otp)
         onLoadingChange(false)
-        
+
         result.onSuccess {
-            onSuccess(null) // Navigate to civic data screen
+            onSuccess(null)
         }.onFailure {
             onError(it.message ?: "Invalid or expired code")
         }
     } else {
-        // password_reset
         val result = authRepository.verifyResetOtp(userId, otp)
         onLoadingChange(false)
-        
+
         result.onSuccess { resetToken ->
-            onSuccess(resetToken) // Navigate to reset password screen
+            onSuccess(resetToken)
         }.onFailure {
             onError(it.message ?: "Invalid or expired code")
         }

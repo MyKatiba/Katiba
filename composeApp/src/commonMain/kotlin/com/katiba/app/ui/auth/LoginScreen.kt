@@ -22,6 +22,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -208,49 +209,63 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Login button
-            Button(
-                onClick = {
-                    if (email.isBlank() || password.isBlank()) {
-                        errorMessage = "Please enter email and password"
-                        return@Button
-                    }
-                    
-                    coroutineScope.launch {
-                        isLoading = true
-                        errorMessage = null
-                        val result = authRepository.loginWithEmail(email, password)
-                        isLoading = false
-                        
-                        if (result.isSuccess) {
-                            onLoginSuccess()
-                        } else {
-                            errorMessage = result.exceptionOrNull()?.message ?: "Login failed"
-                        }
-                    }
-                },
+            // Login button with physical shadow
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                enabled = !isLoading,
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = KatibaColors.KenyaGreen,
-                    contentColor = Color.White
-                )
+                    .height(60.dp)
             ) {
-                if (isLoading) {
-                    androidx.compose.material3.CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(KatibaColors.DarkGreen, RoundedCornerShape(16.dp))
+                )
+                Button(
+                    onClick = {
+                        if (email.isBlank() || password.isBlank()) {
+                            errorMessage = "Please enter email and password"
+                            return@Button
+                        }
+
+                        coroutineScope.launch {
+                            isLoading = true
+                            errorMessage = null
+                            val result = authRepository.loginWithEmail(email, password)
+                            isLoading = false
+
+                            if (result.isSuccess) {
+                                onLoginSuccess()
+                            } else {
+                                errorMessage = result.exceptionOrNull()?.message ?: "Login failed"
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .align(Alignment.TopCenter),
+                    enabled = !isLoading,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = KatibaColors.KenyaGreen,
+                        contentColor = Color.White
                     )
-                } else {
-                    Text(
-                        text = "Login",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            text = "Login",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
 
@@ -273,53 +288,67 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Google sign in button
-            OutlinedButton(
-                onClick = {
-                    if (googleSignInService == null) {
-                        errorMessage = "Google Sign-In not supported on this device"
-                        return@OutlinedButton
-                    }
-                    
-                    coroutineScope.launch {
-                        isLoading = true
-                        errorMessage = null
-                        val signInResult = googleSignInService.signIn()
-                        if (signInResult.isSuccess) {
-                            val idToken = signInResult.getOrThrow()
-                            val authResult = authRepository.loginWithGoogle(idToken)
-                            isLoading = false
-                            if (authResult.isSuccess) {
-                                onLoginSuccess()
-                            } else {
-                                errorMessage = authResult.exceptionOrNull()?.message ?: "Google Auth failed"
-                            }
-                        } else {
-                            isLoading = false
-                            errorMessage = signInResult.exceptionOrNull()?.message ?: "Google Sign-In canceled or failed"
-                        }
-                    }
-                },
+            // Google sign in button with shadow
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true),
-                enabled = !isLoading
+                    .height(60.dp)
             ) {
-                Icon(
-                    imageVector = GoogleIcon,
-                    contentDescription = "Google",
-                    modifier = Modifier.size(20.dp),
-                    tint = Color.Unspecified
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
                 )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Sign in with Google",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                OutlinedButton(
+                    onClick = {
+                        if (googleSignInService == null) {
+                            errorMessage = "Google Sign-In not supported on this device"
+                            return@OutlinedButton
+                        }
+
+                        coroutineScope.launch {
+                            isLoading = true
+                            errorMessage = null
+                            val signInResult = googleSignInService.signIn()
+                            if (signInResult.isSuccess) {
+                                val idToken = signInResult.getOrThrow()
+                                val authResult = authRepository.loginWithGoogle(idToken)
+                                isLoading = false
+                                if (authResult.isSuccess) {
+                                    onLoginSuccess()
+                                } else {
+                                    errorMessage = authResult.exceptionOrNull()?.message ?: "Google Auth failed"
+                                }
+                            } else {
+                                isLoading = false
+                                errorMessage = signInResult.exceptionOrNull()?.message ?: "Google Sign-In canceled or failed"
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .align(Alignment.TopCenter),
+                    shape = RoundedCornerShape(16.dp),
+                    border = ButtonDefaults.outlinedButtonBorder(enabled = true),
+                    enabled = !isLoading
+                ) {
+                    Icon(
+                        imageVector = GoogleIcon,
+                        contentDescription = "Google",
+                        modifier = Modifier.size(20.dp),
+                        tint = Color.Unspecified
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Sign in with Google",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))

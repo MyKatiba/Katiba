@@ -143,50 +143,78 @@ fun OnboardingScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Centered button with rounded rectangle shape
+                // Centered button with rounded rectangle shape and physical shadow
                 if (currentPage == onboardingPages.size - 1) {
                     // "Get Started" button — only on page 3
-                    Button(
-                        onClick = onGetStarted,
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = KatibaColors.KenyaGreen,
-                            contentColor = Color.White
-                        )
+                            .height(60.dp)
                     ) {
-                        Text(
-                            text = "Get Started",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .align(Alignment.BottomCenter)
+                                .background(KatibaColors.DarkGreen, RoundedCornerShape(16.dp))
                         )
+                        Button(
+                            onClick = onGetStarted,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .align(Alignment.TopCenter),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = KatibaColors.KenyaGreen,
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text(
+                                text = "Get Started",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
                     }
                 } else {
                     // "Next" button — pages 1 & 2
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(currentPage + 1)
-                            }
-                        },
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = KatibaColors.KenyaGreen,
-                            contentColor = Color.White
-                        )
+                            .height(60.dp)
                     ) {
-                        Text(
-                            text = "Next",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .align(Alignment.BottomCenter)
+                                .background(KatibaColors.DarkGreen, RoundedCornerShape(16.dp))
                         )
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    pagerState.animateScrollToPage(currentPage + 1)
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .align(Alignment.TopCenter),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = KatibaColors.KenyaGreen,
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text(
+                                text = "Next",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                        }
                     }
                 }
             }
