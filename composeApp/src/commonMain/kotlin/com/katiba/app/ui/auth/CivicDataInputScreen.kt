@@ -1,6 +1,11 @@
 package com.katiba.app.ui.auth
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -19,7 +23,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.katiba.app.data.api.UserApiClient
 import com.katiba.app.ui.theme.KatibaColors
+import katiba.composeapp.generated.resources.Res
+import katiba.composeapp.generated.resources.app_icon
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun CivicDataInputScreen(
@@ -41,42 +48,18 @@ fun CivicDataInputScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Kenyan flag gradient stripe
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(4.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            KatibaColors.KenyaBlack,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaWhite,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaBlack
-                        )
-                    )
-                )
-        )
+        Spacer(modifier = Modifier.height(92.dp))
         
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // Icon
-            Text(
-                text = "🇰🇪",
-                fontSize = 64.sp,
-                textAlign = TextAlign.Center
-            )
+        // App Icon
+        Image(
+            painter = painterResource(Res.drawable.app_icon),
+            contentDescription = "Katiba App Icon",
+            modifier = Modifier.size(80.dp)
+        )
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -232,73 +215,85 @@ fun CivicDataInputScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Submit button
-            Button(
-                onClick = {
-                    if (nationalId.isBlank() || county.isBlank() || 
-                        constituency.isBlank() || ward.isBlank()) {
-                        errorMessage = "Please fill in all fields"
-                        return@Button
-                    }
-                    
-                    coroutineScope.launch {
-                        isLoading = true
-                        errorMessage = null
-                        
-                        val result = userApiClient.updateProfile(
-                            nationalId = nationalId,
-                            county = county,
-                            constituency = constituency,
-                            ward = ward,
-                            isRegisteredVoter = isRegisteredVoter
-                        )
-                        
-                        isLoading = false
-                        
-                        result.onSuccess {
-                            onComplete()
-                        }.onFailure {
-                            errorMessage = it.message ?: "Failed to save civic data"
-                        }
-                    }
-                },
+            // Submit button with physical UI and press animation
+            val buttonInteractionSource = remember { MutableInteractionSource() }
+            val isButtonPressed by buttonInteractionSource.collectIsPressedAsState()
+            val buttonPressOffset by animateDpAsState(
+                targetValue = if (isButtonPressed) 4.dp else 0.dp,
+                animationSpec = tween(durationMillis = 100)
+            )
+            
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                enabled = !isLoading,
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = KatibaColors.KenyaGreen
-                )
+                    .height(60.dp)
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White
+                // Shadow box
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(KatibaColors.DarkGreen, RoundedCornerShape(16.dp))
+                )
+                Button(
+                    onClick = {
+                        if (nationalId.isBlank() || county.isBlank() || 
+                            constituency.isBlank() || ward.isBlank()) {
+                            errorMessage = "Please fill in all fields"
+                            return@Button
+                        }
+                        
+                        coroutineScope.launch {
+                            isLoading = true
+                            errorMessage = null
+                            
+                            val result = userApiClient.updateProfile(
+                                nationalId = nationalId,
+                                county = county,
+                                constituency = constituency,
+                                ward = ward,
+                                isRegisteredVoter = isRegisteredVoter
+                            )
+                            
+                            isLoading = false
+                            
+                            result.onSuccess {
+                                onComplete()
+                            }.onFailure {
+                                errorMessage = it.message ?: "Failed to save civic data"
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .align(Alignment.TopCenter)
+                        .offset(y = buttonPressOffset),
+                    enabled = !isLoading,
+                    shape = RoundedCornerShape(16.dp),
+                    interactionSource = buttonInteractionSource,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = KatibaColors.KenyaGreen,
+                        contentColor = Color.White
                     )
-                } else {
-                    Text(
-                        text = "Complete Setup",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            text = "Complete Setup",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Skip button
-            TextButton(
-                onClick = onSkip,
-                enabled = !isLoading
-            ) {
-                Text(
-                    text = "Skip for now",
-                    color = Color.Gray
-                )
-            }
-            
             Spacer(modifier = Modifier.height(32.dp))
-        }
     }
 }

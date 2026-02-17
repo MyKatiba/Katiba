@@ -91,38 +91,6 @@ fun ForgotPasswordScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Top-left back button (rounded square)
-        IconButton(
-            onClick = {
-                when (currentStep) {
-                    ForgotPasswordStep.EMAIL_ENTRY -> onBackToLogin()
-                    ForgotPasswordStep.OTP_VERIFICATION -> {
-                        currentStep = ForgotPasswordStep.EMAIL_ENTRY
-                        errorMessage = null
-                    }
-                    ForgotPasswordStep.NEW_PASSWORD -> {
-                        currentStep = ForgotPasswordStep.OTP_VERIFICATION
-                        errorMessage = null
-                    }
-                }
-            },
-            enabled = !isLoading,
-            modifier = Modifier
-                .padding(start = 16.dp, top = 16.dp)
-                .align(Alignment.TopStart)
-                .size(44.dp)
-                .shadow(2.dp, RoundedCornerShape(12.dp))
-                .background(Color.White, RoundedCornerShape(12.dp))
-                .border(1.dp, Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-        ) {
-            Icon(
-                imageVector = ForgotBackArrowIcon,
-                contentDescription = "Back",
-                modifier = Modifier.size(20.dp),
-                tint = KatibaColors.OnSurface
-            )
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -131,7 +99,7 @@ fun ForgotPasswordScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Moved down by 100dp (original 48 + 100 extra)
-            Spacer(modifier = Modifier.height(148.dp))
+            Spacer(modifier = Modifier.height(118.dp))
 
             // App icon
             Image(
@@ -318,6 +286,38 @@ fun ForgotPasswordScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
+
+        // Top-left back button (rounded square) - placed after Column to be on top for touch events
+        IconButton(
+            onClick = {
+                when (currentStep) {
+                    ForgotPasswordStep.EMAIL_ENTRY -> onBackToLogin()
+                    ForgotPasswordStep.OTP_VERIFICATION -> {
+                        currentStep = ForgotPasswordStep.EMAIL_ENTRY
+                        errorMessage = null
+                    }
+                    ForgotPasswordStep.NEW_PASSWORD -> {
+                        currentStep = ForgotPasswordStep.OTP_VERIFICATION
+                        errorMessage = null
+                    }
+                }
+            },
+            enabled = !isLoading,
+            modifier = Modifier
+                .padding(start = 16.dp, top = 16.dp)
+                .align(Alignment.TopStart)
+                .size(44.dp)
+                .shadow(2.dp, RoundedCornerShape(12.dp))
+                .background(Color.White, RoundedCornerShape(12.dp))
+                .border(1.dp, Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+        ) {
+            Icon(
+                imageVector = ForgotBackArrowIcon,
+                contentDescription = "Back",
+                modifier = Modifier.size(20.dp),
+                tint = KatibaColors.OnSurface
+            )
         }
     }
 }
