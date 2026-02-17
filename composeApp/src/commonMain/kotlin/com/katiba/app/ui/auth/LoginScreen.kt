@@ -34,7 +34,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -52,16 +54,24 @@ import katiba.composeapp.generated.resources.Res
 import katiba.composeapp.generated.resources.app_icon
 import org.jetbrains.compose.resources.painterResource
 
+import com.katiba.app.data.repository.AuthRepository
+import com.katiba.app.data.service.GoogleSignInService
+import kotlinx.coroutines.launch
+
 @Composable
 fun LoginScreen(
+    authRepository: AuthRepository,
+    googleSignInService: GoogleSignInService? = null,
     onLoginSuccess: () -> Unit,
     onNavigateToSignUp: () -> Unit,
-    onNavigateToForgotPassword: () -> Unit = { println("TODO: Forgot password flow") },
-    onGoogleSignIn: () -> Unit = { println("TODO: Google sign-in tapped") }
+    onNavigateToForgotPassword: () -> Unit = { println("TODO: Forgot password flow") }
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val coroutineScope = rememberCoroutineScope()
 
     // Interaction sources for tracking focus state
     val emailInteractionSource = remember { MutableInteractionSource() }
@@ -186,24 +196,62 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            // Error message
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             // Login button
             Button(
-                onClick = onLoginSuccess,
+                onClick = {
+                    if (email.isBlank() || password.isBlank()) {
+                        errorMessage = "Please enter email and password"
+                        return@Button
+                    }
+                    
+                    coroutineScope.launch {
+                        isLoading = true
+                        errorMessage = null
+                        val result = authRepository.loginWithEmail(email, password)
+                        isLoading = false
+                        
+                        if (result.isSuccess) {
+                            onLoginSuccess()
+                        } else {
+                            errorMessage = result.exceptionOrNull()?.message ?: "Login failed"
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
+                enabled = !isLoading,
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = KatibaColors.KenyaGreen,
                     contentColor = Color.White
                 )
             ) {
-                Text(
-                    text = "Login",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
+                if (isLoading) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White
+                    )
+                } else {
+                    Text(
+                        text = "Login",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -227,12 +275,37 @@ fun LoginScreen(
 
             // Google sign in button
             OutlinedButton(
-                onClick = onGoogleSignIn,
+                onClick = {
+                    if (googleSignInService == null) {
+                        errorMessage = "Google Sign-In not supported on this device"
+                        return@OutlinedButton
+                    }
+                    
+                    coroutineScope.launch {
+                        isLoading = true
+                        errorMessage = null
+                        val signInResult = googleSignInService.signIn()
+                        if (signInResult.isSuccess) {
+                            val idToken = signInResult.getOrThrow()
+                            val authResult = authRepository.loginWithGoogle(idToken)
+                            isLoading = false
+                            if (authResult.isSuccess) {
+                                onLoginSuccess()
+                            } else {
+                                errorMessage = authResult.exceptionOrNull()?.message ?: "Google Auth failed"
+                            }
+                        } else {
+                            isLoading = false
+                            errorMessage = signInResult.exceptionOrNull()?.message ?: "Google Sign-In canceled or failed"
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true)
+                border = ButtonDefaults.outlinedButtonBorder(enabled = true),
+                enabled = !isLoading
             ) {
                 Icon(
                     imageVector = GoogleIcon,

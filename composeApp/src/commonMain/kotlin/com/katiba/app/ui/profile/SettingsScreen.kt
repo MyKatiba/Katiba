@@ -26,6 +26,7 @@ import com.katiba.app.ui.theme.KatibaColors
 @Composable
 fun SettingsScreen(
     onBackClick: () -> Unit,
+    onSignOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -238,7 +239,7 @@ fun SettingsScreen(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { /* Sign out */ }
+                        .clickable { onSignOut() }
                 ) {
                     Box(
                         modifier = Modifier

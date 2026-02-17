@@ -13,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,6 +36,7 @@ fun ConstitutionScreen(
     var showChapterList by remember { mutableStateOf(true) }
     
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             Column {
                 TopAppBar(
@@ -77,27 +77,8 @@ fun ConstitutionScreen(
             modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background)
         ) {
-            // Beadwork accent line
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                KatibaColors.KenyaBlack,
-                                KatibaColors.KenyaRed,
-                                KatibaColors.KenyaGreen,
-                                KatibaColors.KenyaWhite,
-                                KatibaColors.KenyaGreen,
-                                KatibaColors.KenyaRed,
-                                KatibaColors.KenyaBlack
-                            )
-                        )
-                    )
-            )
-            
             if (showChapterList) {
                 ChapterListView(
                     chapters = chapters,

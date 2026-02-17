@@ -59,6 +59,11 @@ import com.katiba.app.ui.theme.KatibaColors
 import katiba.composeapp.generated.resources.Res
 import katiba.composeapp.generated.resources.bracelet
 import org.jetbrains.compose.resources.painterResource
+import com.katiba.app.data.repository.AuthRepository
+import com.katiba.app.data.service.GoogleSignInService
+import com.katiba.app.ui.auth.LoginScreen
+import com.katiba.app.ui.auth.SignUpScreen
+import kotlinx.coroutines.flow.collectLatest
 
 /**
  * Profile screen with redesigned layout matching the Kenyan civic app design
@@ -66,10 +71,60 @@ import org.jetbrains.compose.resources.painterResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
+    authRepository: AuthRepository,
+    googleSignInService: GoogleSignInService? = null,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val userProfile = remember { SampleDataRepository.getUserProfile() }
+    val currentUser by authRepository.currentUser.collectAsState(initial = null)
+    var isLoginMode by remember { mutableStateOf(true) }
+
+    // If no user is logged in, show Auth screens
+    if (currentUser == null) {
+        if (isLoginMode) {
+            LoginScreen(
+                authRepository = authRepository,
+                googleSignInService = googleSignInService,
+                onLoginSuccess = { /* Profile will automatically update due to currentUser observation */ },
+                onNavigateToSignUp = { isLoginMode = false },
+                onNavigateToForgotPassword = { /* TODO: Navigate to global forgot password route or show dialog */ }
+            )
+        } else {
+            SignUpScreen(
+                authRepository = authRepository,
+                googleSignInService = googleSignInService,
+                onSignUpSuccess = { _, _ -> /* Profile will automatically update */ },
+                onNavigateToLogin = { isLoginMode = true }
+            )
+        }
+        return
+    }
+
+    // Map AuthUser to UserProfile (combining real auth data with sample stats for now)
+    val userProfile = remember(currentUser) {
+        val sample = SampleDataRepository.getUserProfile()
+        UserProfile(
+            id = currentUser!!.id,
+            name = currentUser!!.name.ifEmpty { "Mzalendo" },
+            email = currentUser!!.email,
+            avatarUrl = currentUser!!.avatarUrl,
+            emailVerified = currentUser!!.emailVerified,
+            joinedDate = if (currentUser!!.joinedDate.isNotEmpty()) currentUser!!.joinedDate else "2024",
+            badges = sample.badges,
+            // Use sample data for stats until connected to backend
+            streak = sample.streak,
+            longestStreak = sample.longestStreak,
+            totalLessonsCompleted = sample.totalLessonsCompleted,
+            xp = sample.xp,
+            // Use defaults or sample for civic data
+            county = sample.county,
+            constituency = sample.constituency,
+            ward = sample.ward,
+            isRegisteredVoter = sample.isRegisteredVoter,
+            nationalId = sample.nationalId
+        )
+    }
+    
     val lessons = remember { SampleDataRepository.getLessons() }
     var showCivicDataSheet by remember { mutableStateOf(false) }
     var showStreakSheet by remember { mutableStateOf(false) }
@@ -128,7 +183,11 @@ fun ProfileScreen(
                     color = KatibaColors.KenyaBlack
                 )
                 IconButton(
-                    onClick = onSettingsClick,
+                    onClick = {
+                        // Sign out logic
+                         // For now just settings, but we could add a sign out button here or in settings
+                        onSettingsClick()
+                    },
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
@@ -379,7 +438,7 @@ private fun ProfileCard(userProfile: UserProfile) {
                 ) {
                     // Name
                     Text(
-                        text = "Wanjiku Kamau",
+                        text = userProfile.name,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -387,7 +446,7 @@ private fun ProfileCard(userProfile: UserProfile) {
 
                     // Member since
                     Text(
-                        text = "Citizen since 2023",
+                        text = "Citizen since ${userProfile.joinedDate}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.8f),
                         fontWeight = FontWeight.Medium

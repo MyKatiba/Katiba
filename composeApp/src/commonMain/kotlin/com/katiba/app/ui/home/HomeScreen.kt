@@ -148,7 +148,7 @@ fun HomeScreen(
                     // Card 1: Clause of the Day (Hero Card)
                     ClauseOfTheDayCard(
                         dailyContent = dailyContent,
-                        onClick = onClauseCardClick
+                        onClick = { isClauseExpanded = true }
                     )
                     
                     // Card 2: AI Description + Video

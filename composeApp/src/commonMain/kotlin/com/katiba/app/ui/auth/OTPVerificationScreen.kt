@@ -18,7 +18,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.katiba.app.data.api.AuthApiClient
+import com.katiba.app.data.repository.AuthRepository
 import com.katiba.app.ui.theme.KatibaColors
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -28,6 +28,7 @@ fun OTPVerificationScreen(
     userId: String,
     email: String,
     purpose: String, // "email_verification" or "password_reset"
+    authRepository: AuthRepository,
     onVerificationSuccess: (String?) -> Unit, // resetToken for password_reset, null for email_verification
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -39,7 +40,6 @@ fun OTPVerificationScreen(
     var canResend by remember { mutableStateOf(false) }
     val focusRequesters = remember { List(6) { FocusRequester() } }
     val coroutineScope = rememberCoroutineScope()
-    val authApiClient = remember { AuthApiClient() }
     
     // Countdown timer for resend
     LaunchedEffect(resendCountdown) {
@@ -151,7 +151,7 @@ fun OTPVerificationScreen(
                                     val otp = newDigits.joinToString("")
                                     coroutineScope.launch {
                                         verifyOtp(
-                                            authApiClient,
+                                            authRepository,
                                             userId,
                                             otp,
                                             purpose,
@@ -208,7 +208,7 @@ fun OTPVerificationScreen(
                         coroutineScope.launch {
                             isLoading = true
                             errorMessage = null
-                            val result = authApiClient.resendOtp(userId, purpose)
+                            val result = authRepository.resendOtp(userId, purpose)
                             isLoading = false
                             
                             result.onSuccess {
@@ -245,7 +245,7 @@ fun OTPVerificationScreen(
                     if (otp.length == 6) {
                         coroutineScope.launch {
                             verifyOtp(
-                                authApiClient,
+                                authRepository,
                                 userId,
                                 otp,
                                 purpose,
@@ -298,7 +298,7 @@ fun OTPVerificationScreen(
 }
 
 private suspend fun verifyOtp(
-    authApiClient: AuthApiClient,
+    authRepository: AuthRepository,
     userId: String,
     otp: String,
     purpose: String,
@@ -309,7 +309,7 @@ private suspend fun verifyOtp(
     onLoadingChange(true)
     
     if (purpose == "email_verification") {
-        val result = authApiClient.verifyEmail(userId, otp)
+        val result = authRepository.verifyEmail(userId, otp)
         onLoadingChange(false)
         
         result.onSuccess {
@@ -319,11 +319,11 @@ private suspend fun verifyOtp(
         }
     } else {
         // password_reset
-        val result = authApiClient.verifyResetOtp(userId, otp)
+        val result = authRepository.verifyResetOtp(userId, otp)
         onLoadingChange(false)
         
-        result.onSuccess { response ->
-            onSuccess(response.resetToken) // Navigate to reset password screen
+        result.onSuccess { resetToken ->
+            onSuccess(resetToken) // Navigate to reset password screen
         }.onFailure {
             onError(it.message ?: "Invalid or expired code")
         }

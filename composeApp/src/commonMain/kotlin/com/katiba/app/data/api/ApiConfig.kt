@@ -21,9 +21,6 @@ object ApiConfig {
     }
     
     // Backend API base URL
-    // TODO: Update with production URL when available
-    const val BASE_URL = "http://10.0.2.2:3000" // Android emulator localhost
-    // For iOS simulator, use: "http://localhost:3000"
-    // For production: "https://api.katiba.app"
+    const val BASE_URL = "https://katiba-backend.onrender.com"
 }
 

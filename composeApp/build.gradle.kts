@@ -50,6 +50,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.ktor.client.android)
             implementation(libs.androidx.core.splashscreen)
+            implementation(libs.googleid)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -67,6 +68,7 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.gitlive.firebase.auth)
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
@@ -127,7 +129,8 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
-    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
+    // Firebase BOM 34.0.0 for firebase-ai support
+    implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-ai")
     implementation("com.google.firebase:firebase-auth")
@@ -136,4 +139,9 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.firebase:firebase-config")
+
+    // KTX dependencies required by GitLive Firebase (no longer in newer BOMs)
+    // Using versions from Firebase BOM 32.8.1
+    implementation("com.google.firebase:firebase-auth-ktx:22.3.1")
+    implementation("com.google.firebase:firebase-common-ktx:20.4.3")
 }

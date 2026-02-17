@@ -29,7 +29,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -45,6 +46,8 @@ import katiba.composeapp.generated.resources.Res
 import katiba.composeapp.generated.resources.mzalendo1
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
@@ -223,6 +226,7 @@ fun MzalendoScreen(
         ) { paddingValues ->
             if (showWelcomeScreen && messages.isEmpty()) {
                 WelcomeScreenContent(
+                    isTyping = inputText.isNotEmpty(),
                     onSuggestionClick = { suggestion -> sendMessage(suggestion) },
                     modifier = Modifier
                         .fillMaxSize()
@@ -312,7 +316,7 @@ private fun KatibaAITopBar(
     }
 }
 
-// ─── Chat history drawer ─────────────────────────────────────────────────────
+// ─── Chat history drawer (redesigned to match reference image) ───────────────
 
 @Composable
 private fun ChatHistoryDrawer(
@@ -322,70 +326,66 @@ private fun ChatHistoryDrawer(
     onLoadChat: (String) -> Unit,
     onDeleteChat: (String) -> Unit
 ) {
+    // Group sessions by time period
+    val now = kotlinx.datetime.Clock.System.now()
+    val today = now.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault()).date
+
+    val groupedSessions = sessions.groupBy { session ->
+        // Simple grouping based on session order (most recent first)
+        // In a real app, you'd use the actual timestamp
+        val index = sessions.indexOf(session)
+        when {
+            index == 0 -> "Today"
+            index == 1 -> "Yesterday"
+            index in 2..6 -> "Last 7 days"
+            else -> "Last 30 days"
+        }
+    }
+
     ModalDrawerSheet(
-        drawerContainerColor = MaterialTheme.colorScheme.surface
+        drawerContainerColor = Color.White
     ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
                 .width(280.dp)
         ) {
-            // Header
-            Surface(
-                color = KatibaColors.KenyaGreen,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .statusBarsPadding()
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "Chat History",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "${sessions.size} conversation${if (sessions.size != 1) "s" else ""}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f)
-                    )
-                }
-            }
+            // Status bar padding
+            Spacer(modifier = Modifier.statusBarsPadding())
 
-            // New Chat button
-            Surface(
-                onClick = onNewChat,
-                color = KatibaColors.KenyaGreen.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(12.dp),
+            // New Chat button at top
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp)
+                    .clickable { onNewChat() }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFF3F4F6)),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = null,
-                        tint = KatibaColors.KenyaGreen,
+                        tint = Color.Gray,
                         modifier = Modifier.size(20.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "New Chat",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = KatibaColors.KenyaGreen
-                    )
                 }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "New chat",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Black
+                )
             }
 
-            // Chat sessions list
+            HorizontalDivider(color = Color(0xFFF3F4F6))
+
+            // Chat sessions list grouped by time
             if (sessions.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -396,56 +396,36 @@ private fun ChatHistoryDrawer(
                     Text(
                         text = "No previous chats",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.Gray
                     )
                 }
             } else {
                 LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    modifier = Modifier.weight(1f)
                 ) {
-                    items(sessions) { session ->
-                        val isActive = session.id == currentSessionId
-                        Surface(
-                            onClick = { onLoadChat(session.id) },
-                            color = if (isActive) KatibaColors.KenyaGreen.copy(alpha = 0.1f)
-                                    else Color.Transparent,
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = session.title,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1
-                                    )
-                                    Text(
-                                        text = "${session.messages.size} messages",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                IconButton(
-                                    onClick = { onDeleteChat(session.id) },
-                                    modifier = Modifier.size(32.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Delete chat",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
+                    val timeGroups = listOf("Today", "Yesterday", "Last 7 days", "Last 30 days")
+
+                    timeGroups.forEach { timeGroup ->
+                        val sessionsInGroup = groupedSessions[timeGroup] ?: emptyList()
+                        if (sessionsInGroup.isNotEmpty()) {
+                            item {
+                                Text(
+                                    text = timeGroup,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.Gray,
+                                    fontWeight = FontWeight.Medium,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                            }
+
+                            items(sessionsInGroup) { session ->
+                                val isActive = session.id == currentSessionId
+                                ChatHistoryItem(
+                                    title = session.title,
+                                    isActive = isActive,
+                                    onClick = { onLoadChat(session.id) },
+                                    onDelete = { onDeleteChat(session.id) }
+                                )
                             }
                         }
                     }
@@ -455,11 +435,98 @@ private fun ChatHistoryDrawer(
     }
 }
 
+@Composable
+private fun ChatHistoryItem(
+    title: String,
+    isActive: Boolean,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showMenu by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(if (isActive) Color(0xFFF0FDF4) else Color.Transparent)
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (isActive) KatibaColors.KenyaGreen else Color.Black,
+            fontWeight = if (isActive) FontWeight.Medium else FontWeight.Normal,
+            maxLines = 1,
+            modifier = Modifier.weight(1f)
+        )
+
+        Box {
+            IconButton(
+                onClick = { showMenu = true },
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = MoreVertIcon,
+                    contentDescription = "More options",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            DropdownMenu(
+                expanded = showMenu,
+                onDismissRequest = { showMenu = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Delete") },
+                    onClick = {
+                        showMenu = false
+                        onDelete()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = KatibaColors.KenyaRed
+                        )
+                    }
+                )
+            }
+        }
+    }
+}
+
+// More vertical dots icon
+private val MoreVertIcon: ImageVector
+    get() = ImageVector.Builder(
+        name = "MoreVert",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(fill = androidx.compose.ui.graphics.SolidColor(Color.Black)) {
+            // Three vertical dots
+            moveTo(12f, 8f)
+            arcTo(2f, 2f, 0f, false, true, 12f, 4f)
+            arcTo(2f, 2f, 0f, false, true, 12f, 8f)
+            moveTo(12f, 14f)
+            arcTo(2f, 2f, 0f, false, true, 12f, 10f)
+            arcTo(2f, 2f, 0f, false, true, 12f, 14f)
+            moveTo(12f, 20f)
+            arcTo(2f, 2f, 0f, false, true, 12f, 16f)
+            arcTo(2f, 2f, 0f, false, true, 12f, 20f)
+            close()
+        }
+    }.build()
+
 // ─── Welcome screen ──────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 private fun WelcomeScreenContent(
+    isTyping: Boolean,
     onSuggestionClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -514,28 +581,35 @@ private fun WelcomeScreenContent(
 
         Column(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = if (isTyping) Arrangement.Center else Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
+            // When not typing, add top spacing
+            if (!isTyping) {
+                Spacer(modifier = Modifier.height(32.dp))
+            }
 
             // Mascot image with chat bubble overlay
+            // When typing, show smaller centered mascot without chat bubble
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp),
+                contentAlignment = if (isTyping) Alignment.Center else Alignment.CenterStart
             ) {
                 Image(
                     painter = painterResource(Res.drawable.mzalendo1),
                     contentDescription = "Mzalendo - Constitutional Guide Mascot",
                     modifier = Modifier
-                        .size(160.dp)
-                        .align(Alignment.CenterStart),
+                        .size(if (isTyping) 120.dp else 160.dp),
                     contentScale = ContentScale.Fit
                 )
 
+                // Hide chat bubble when typing
                 androidx.compose.animation.AnimatedVisibility(
-                    visible = showBubble,
+                    visible = showBubble && !isTyping,
                     enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically(),
                     modifier = Modifier
                         .align(Alignment.CenterStart)
                         .padding(start = 140.dp)
@@ -548,14 +622,22 @@ private fun WelcomeScreenContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            // Hide prompt suggestions when typing
+            AnimatedVisibility(
+                visible = !isTyping,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
+            ) {
+                Column {
+                    Spacer(modifier = Modifier.height(24.dp))
 
-            TryAskingSection(
-                onSuggestionClick = onSuggestionClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            )
+                    TryAskingSection(
+                        onSuggestionClick = onSuggestionClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                }
+            }
         }
     }
 }
@@ -767,7 +849,7 @@ private fun LoadingIndicator() {
     }
 }
 
-// ─── Chat input (redesigned: seamless white bottom bar) ──────────────────────
+// ─── Chat input (styled to match bottom navigation bar) ──────────────────────
 
 @Composable
 private fun KatibaAIChatInput(
@@ -778,24 +860,22 @@ private fun KatibaAIChatInput(
     isLoading: Boolean,
     modifier: Modifier = Modifier
 ) {
-    // Seamless white background that extends all the way to the bottom
+    // Styled to match the bottom navigation bar
     Surface(
         modifier = modifier,
         color = Color.White,
-        shadowElevation = 0.dp,
-        shape = RectangleShape // No rounded corners - seamless blend
+        shadowElevation = 8.dp,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.White) // Ensure consistent white background
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp)
-                .padding(top = 12.dp, bottom = 8.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             // Text field row
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .padding(top = 12.dp, bottom = 8.dp),
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -873,6 +953,8 @@ private fun KatibaAIChatInput(
                     }
                 }
             }
+            // Extra space at the bottom for phone's navigation bar
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

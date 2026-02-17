@@ -56,11 +56,15 @@ import katiba.composeapp.generated.resources.app_icon
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
+import com.katiba.app.data.repository.AuthRepository
+import com.katiba.app.data.service.GoogleSignInService
+
 @Composable
 fun SignUpScreen(
+    authRepository: AuthRepository,
+    googleSignInService: GoogleSignInService? = null,
     onSignUpSuccess: (String, String) -> Unit, // (userId, email)
-    onNavigateToLogin: () -> Unit,
-    onGoogleSignUp: () -> Unit = { println("TODO: Google sign-up tapped") }
+    onNavigateToLogin: () -> Unit
 ) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -71,7 +75,6 @@ fun SignUpScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
-    val authApiClient = remember { AuthApiClient() }
 
     // Interaction sources for tracking focus state
     val fullNameInteractionSource = remember { MutableInteractionSource() }
@@ -278,19 +281,20 @@ fun SignUpScreen(
                                 isLoading = true
                                 errorMessage = null
                                 
-                                val result = authApiClient.register(
+                                val result = authRepository.registerWithEmail(
                                     name = fullName,
                                     email = email,
                                     password = password,
                                     confirmPassword = confirmPassword
                                 )
-                                
+
                                 isLoading = false
-                                
-                                result.onSuccess { response ->
-                                    onSignUpSuccess(response.userId, email)
-                                }.onFailure { error ->
-                                    errorMessage = error.message ?: "Registration failed"
+
+                                if (result.isSuccess) {
+                                    val userId = result.getOrThrow()
+                                    onSignUpSuccess(userId, email)
+                                } else {
+                                    errorMessage = result.exceptionOrNull()?.message ?: "Registration failed"
                                 }
                             }
                         }
@@ -342,12 +346,38 @@ fun SignUpScreen(
 
             // Google sign up button
             OutlinedButton(
-                onClick = onGoogleSignUp,
+                onClick = {
+                    if (googleSignInService == null) {
+                        errorMessage = "Google Sign-Up not supported on this device"
+                        return@OutlinedButton
+                    }
+                    
+                    coroutineScope.launch {
+                        isLoading = true
+                        errorMessage = null
+                        val signInResult = googleSignInService.signIn()
+                        if (signInResult.isSuccess) {
+                            val idToken = signInResult.getOrThrow()
+                            val authResult = authRepository.loginWithGoogle(idToken)
+                            isLoading = false
+                            if (authResult.isSuccess) {
+                                val userProfile = authResult.getOrThrow()
+                                onSignUpSuccess(userProfile.id, userProfile.email)
+                            } else {
+                                errorMessage = authResult.exceptionOrNull()?.message ?: "Google Auth failed"
+                            }
+                        } else {
+                            isLoading = false
+                            errorMessage = signInResult.exceptionOrNull()?.message ?: "Google Sign-In canceled or failed"
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true)
+                border = ButtonDefaults.outlinedButtonBorder(enabled = true),
+                enabled = !isLoading
             ) {
                 Icon(
                     imageVector = GoogleIcon,

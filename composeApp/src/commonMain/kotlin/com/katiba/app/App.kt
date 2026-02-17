@@ -8,6 +8,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.katiba.app.data.repository.ConstitutionRepository
 import com.katiba.app.ui.auth.CivicDataInputScreen
 import com.katiba.app.ui.auth.ForgotPasswordScreen
@@ -31,12 +32,22 @@ import com.katiba.app.ui.profile.SettingsScreen
 import com.katiba.app.ui.theme.KatibaTheme
 import katiba.composeapp.generated.resources.Res
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
+import com.katiba.app.data.repository.AuthRepositoryImpl
+import com.katiba.app.data.service.GoogleSignInService
+
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun App() {
+fun App(
+    googleSignInService: GoogleSignInService? = null // Nullable for platforms where not yet implemented
+) {
+    // Initialize Auth Repository
+    val authRepository = remember { AuthRepositoryImpl() }
+    val coroutineScope = rememberCoroutineScope()
+
     // Load constitution data on first composition
     var isConstitutionLoaded by remember { mutableStateOf(ConstitutionRepository.isLoaded()) }
 
@@ -67,13 +78,21 @@ fun App() {
                 CircularProgressIndicator()
             }
         } else {
-            AppContent()
+            AppContent(
+                authRepository = authRepository,
+                googleSignInService = googleSignInService,
+                coroutineScope = coroutineScope
+            )
         }
     }
 }
 
 @Composable
-private fun AppContent() {
+private fun AppContent(
+    authRepository: AuthRepositoryImpl,
+    googleSignInService: GoogleSignInService?,
+    coroutineScope: kotlinx.coroutines.CoroutineScope
+) {
         // Navigation 3 Style: You own the backstack as a mutable list
         val backStack = rememberNavBackStack(OnboardingRoute)
 
@@ -81,9 +100,11 @@ private fun AppContent() {
         val currentKey = backStack.lastOrNull()
 
         // Handle system back button/swipe navigation
-        BackHandler(enabled = backStack.size >= 1) {
+        // When on Home screen (only HomeRoute in backstack), don't handle back - let system exit app
+        val shouldHandleBack = !(backStack.size == 1 && currentKey is HomeRoute)
+        BackHandler(enabled = shouldHandleBack) {
             if (backStack.size <= 1) {
-                // On the last screen — navigate to Home instead of exiting
+                // On the last screen (not Home) — navigate to Home
                 backStack.clear()
                 backStack.add(HomeRoute)
             } else {
@@ -138,6 +159,7 @@ private fun AppContent() {
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
+            containerColor = Color.White,
             bottomBar = {
                 if (showBottomBar) {
                     KatibaBottomNavigation(
@@ -179,6 +201,8 @@ private fun AppContent() {
                     // Auth screens
                     entry<LoginRoute> {
                         LoginScreen(
+                            authRepository = authRepository,
+                            googleSignInService = googleSignInService,
                             onLoginSuccess = {
                                 // Clear backstack and go to Home
                                 backStack.clear()
@@ -207,6 +231,8 @@ private fun AppContent() {
 
                     entry<SignUpRoute> {
                         SignUpScreen(
+                            authRepository = authRepository,
+                            googleSignInService = googleSignInService,
                             onSignUpSuccess = { userId, email ->
                                 // Navigate to OTP verification
                                 backStack.add(OTPVerificationRoute(userId, email, "email_verification"))
@@ -222,6 +248,7 @@ private fun AppContent() {
                             userId = key.userId,
                             email = key.email,
                             purpose = key.purpose,
+                            authRepository = authRepository,
                             onVerificationSuccess = { resetToken ->
                                 if (key.purpose == "email_verification") {
                                     // Go to civic data input after email verification
@@ -408,6 +435,8 @@ private fun AppContent() {
                     // Plans Tab
                     entry<ProfileRoute> {
                         ProfileScreen(
+                            authRepository = authRepository,
+                            googleSignInService = googleSignInService,
                             onSettingsClick = {
                                 backStack.add(SettingsRoute)
                             }
@@ -416,7 +445,14 @@ private fun AppContent() {
 
                     entry<SettingsRoute> {
                         SettingsScreen(
-                            onBackClick = { backStack.removeLast() }
+                            onBackClick = { backStack.removeLast() },
+                            onSignOut = {
+                                coroutineScope.launch {
+                                    authRepository.signOut()
+                                    // Navigate back to Profile (which will show Login)
+                                    backStack.removeLast() 
+                                }
+                            }
                         )
                     }
                 }
