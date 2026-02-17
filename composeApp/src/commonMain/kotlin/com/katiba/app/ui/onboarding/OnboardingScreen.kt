@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
@@ -146,6 +149,12 @@ fun OnboardingScreen(
                 // Centered button with rounded rectangle shape and physical shadow
                 if (currentPage == onboardingPages.size - 1) {
                     // "Get Started" button — only on page 3
+                    val getStartedInteractionSource = remember { MutableInteractionSource() }
+                    val isGetStartedPressed by getStartedInteractionSource.collectIsPressedAsState()
+                    val getStartedPressOffset by animateDpAsState(
+                        targetValue = if (isGetStartedPressed) 4.dp else 0.dp,
+                        animationSpec = tween(durationMillis = 100)
+                    )
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -163,8 +172,10 @@ fun OnboardingScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
-                                .align(Alignment.TopCenter),
+                                .align(Alignment.TopCenter)
+                                .offset(y = getStartedPressOffset),
                             shape = RoundedCornerShape(16.dp),
+                            interactionSource = getStartedInteractionSource,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = KatibaColors.KenyaGreen,
                                 contentColor = Color.White
@@ -180,6 +191,12 @@ fun OnboardingScreen(
                     }
                 } else {
                     // "Next" button — pages 1 & 2
+                    val nextInteractionSource = remember { MutableInteractionSource() }
+                    val isNextPressed by nextInteractionSource.collectIsPressedAsState()
+                    val nextPressOffset by animateDpAsState(
+                        targetValue = if (isNextPressed) 4.dp else 0.dp,
+                        animationSpec = tween(durationMillis = 100)
+                    )
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -201,8 +218,10 @@ fun OnboardingScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp)
-                                .align(Alignment.TopCenter),
+                                .align(Alignment.TopCenter)
+                                .offset(y = nextPressOffset),
                             shape = RoundedCornerShape(16.dp),
+                            interactionSource = nextInteractionSource,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = KatibaColors.KenyaGreen,
                                 contentColor = Color.White

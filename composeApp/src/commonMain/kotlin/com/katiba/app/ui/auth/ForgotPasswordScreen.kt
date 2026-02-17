@@ -1,17 +1,23 @@
 package com.katiba.app.ui.auth
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -35,6 +41,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -49,7 +56,7 @@ import androidx.compose.ui.graphics.vector.path
 import com.katiba.app.data.api.AuthApiClient
 import com.katiba.app.ui.theme.KatibaColors
 import katiba.composeapp.generated.resources.Res
-import katiba.composeapp.generated.resources.kenya_shield
+import katiba.composeapp.generated.resources.app_icon
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
@@ -75,37 +82,65 @@ fun ForgotPasswordScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-    
+
     val coroutineScope = rememberCoroutineScope()
     val authApiClient = remember { AuthApiClient() }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-            Spacer(modifier = Modifier.height(48.dp))
+        // Top-left back button (rounded square)
+        IconButton(
+            onClick = {
+                when (currentStep) {
+                    ForgotPasswordStep.EMAIL_ENTRY -> onBackToLogin()
+                    ForgotPasswordStep.OTP_VERIFICATION -> {
+                        currentStep = ForgotPasswordStep.EMAIL_ENTRY
+                        errorMessage = null
+                    }
+                    ForgotPasswordStep.NEW_PASSWORD -> {
+                        currentStep = ForgotPasswordStep.OTP_VERIFICATION
+                        errorMessage = null
+                    }
+                }
+            },
+            enabled = !isLoading,
+            modifier = Modifier
+                .padding(start = 16.dp, top = 16.dp)
+                .align(Alignment.TopStart)
+                .size(44.dp)
+                .shadow(2.dp, RoundedCornerShape(12.dp))
+                .background(Color.White, RoundedCornerShape(12.dp))
+                .border(1.dp, Color.Gray.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+        ) {
+            Icon(
+                imageVector = ForgotBackArrowIcon,
+                contentDescription = "Back",
+                modifier = Modifier.size(20.dp),
+                tint = KatibaColors.OnSurface
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Moved down by 100dp (original 48 + 100 extra)
+            Spacer(modifier = Modifier.height(148.dp))
 
             // App icon
             Image(
-                painter = painterResource(Res.drawable.kenya_shield),
+                painter = painterResource(Res.drawable.app_icon),
                 contentDescription = "Katiba App Icon",
                 modifier = Modifier.size(80.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Katiba",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = KatibaColors.KenyaGreen
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Step-specific title
             Text(
@@ -131,7 +166,7 @@ fun ForgotPasswordScreen(
                 modifier = Modifier.padding(top = 8.dp)
             )
 
-            Spacer(modifier = Modifier.height(90.dp)) // 40dp + 50dp for moving form down
+            Spacer(modifier = Modifier.height(90.dp))
 
             // Error message
             if (errorMessage != null) {
@@ -149,7 +184,7 @@ fun ForgotPasswordScreen(
                 ForgotPasswordStep.EMAIL_ENTRY -> {
                     EmailEntryStep(
                         email = email,
-                        onEmailChange = { 
+                        onEmailChange = {
                             email = it
                             errorMessage = null
                         },
@@ -163,14 +198,14 @@ fun ForgotPasswordScreen(
                                 errorMessage = "Please enter a valid email"
                                 return@EmailEntryStep
                             }
-                            
+
                             isLoading = true
                             errorMessage = null
-                            
+
                             coroutineScope.launch {
                                 val result = authApiClient.forgotPassword(email)
                                 isLoading = false
-                                
+
                                 result.onSuccess { response ->
                                     userId = response.userId
                                     currentStep = ForgotPasswordStep.OTP_VERIFICATION
@@ -178,15 +213,14 @@ fun ForgotPasswordScreen(
                                     errorMessage = error.message ?: "Failed to send OTP"
                                 }
                             }
-                        },
-                        onBackToLogin = onBackToLogin
+                        }
                     )
                 }
 
                 ForgotPasswordStep.OTP_VERIFICATION -> {
                     OTPVerificationStep(
                         otp = otp,
-                        onOtpChange = { 
+                        onOtpChange = {
                             otp = it
                             errorMessage = null
                         },
@@ -200,14 +234,14 @@ fun ForgotPasswordScreen(
                                 errorMessage = "OTP must be 6 digits"
                                 return@OTPVerificationStep
                             }
-                            
+
                             isLoading = true
                             errorMessage = null
-                            
+
                             coroutineScope.launch {
                                 val result = authApiClient.verifyResetOtp(userId, otp)
                                 isLoading = false
-                                
+
                                 result.onSuccess { response ->
                                     resetToken = response.resetToken
                                     currentStep = ForgotPasswordStep.NEW_PASSWORD
@@ -219,19 +253,18 @@ fun ForgotPasswordScreen(
                         onResendOTP = {
                             isLoading = true
                             errorMessage = null
-                            
+
                             coroutineScope.launch {
                                 val result = authApiClient.resendOtp(userId, "password_reset")
                                 isLoading = false
-                                
+
                                 result.onSuccess {
                                     errorMessage = "OTP resent successfully"
                                 }.onFailure { error ->
                                     errorMessage = error.message ?: "Failed to resend OTP"
                                 }
                             }
-                        },
-                        onBack = onBackToLogin
+                        }
                     )
                 }
 
@@ -241,11 +274,11 @@ fun ForgotPasswordScreen(
                         confirmPassword = confirmPassword,
                         passwordVisible = passwordVisible,
                         confirmPasswordVisible = confirmPasswordVisible,
-                        onNewPasswordChange = { 
+                        onNewPasswordChange = {
                             newPassword = it
                             errorMessage = null
                         },
-                        onConfirmPasswordChange = { 
+                        onConfirmPasswordChange = {
                             confirmPassword = it
                             errorMessage = null
                         },
@@ -265,29 +298,27 @@ fun ForgotPasswordScreen(
                                 errorMessage = "Passwords do not match"
                                 return@NewPasswordStep
                             }
-                            
+
                             isLoading = true
                             errorMessage = null
-                            
+
                             coroutineScope.launch {
                                 val result = authApiClient.resetPassword(resetToken, newPassword)
                                 isLoading = false
-                                
+
                                 result.onSuccess {
                                     onPasswordResetSuccess()
                                 }.onFailure { error ->
                                     errorMessage = error.message ?: "Failed to reset password"
                                 }
                             }
-                        },
-                        onBack = {
-                            currentStep = ForgotPasswordStep.OTP_VERIFICATION
                         }
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
     }
 }
 
@@ -296,8 +327,7 @@ private fun EmailEntryStep(
     email: String,
     onEmailChange: (String) -> Unit,
     isLoading: Boolean,
-    onSendOTP: () -> Unit,
-    onBackToLogin: () -> Unit
+    onSendOTP: () -> Unit
 ) {
     val emailInteractionSource = remember { MutableInteractionSource() }
     val isEmailFocused by emailInteractionSource.collectIsFocusedAsState()
@@ -334,51 +364,13 @@ private fun EmailEntryStep(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(
+        // Physical button with press animation
+        PhysicalButton(
+            text = "Send OTP",
             onClick = onSendOTP,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = KatibaColors.KenyaGreen,
-                contentColor = Color.White
-            )
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = Color.White,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(
-                    text = "Send OTP",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = onBackToLogin,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.outlinedButtonColors()
-        ) {
-            Text(
-                text = "Back to Login",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                color = KatibaColors.KenyaGreen
-            )
-        }
+            isLoading = isLoading,
+            enabled = !isLoading
+        )
     }
 }
 
@@ -388,8 +380,7 @@ private fun OTPVerificationStep(
     onOtpChange: (String) -> Unit,
     isLoading: Boolean,
     onVerifyOTP: () -> Unit,
-    onResendOTP: () -> Unit,
-    onBack: () -> Unit
+    onResendOTP: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -435,51 +426,13 @@ private fun OTPVerificationStep(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(
+        // Physical button with press animation
+        PhysicalButton(
+            text = "Verify OTP",
             onClick = onVerifyOTP,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = KatibaColors.KenyaGreen,
-                contentColor = Color.White
-            )
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = Color.White,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(
-                    text = "Verify OTP",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = onBack,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.outlinedButtonColors()
-        ) {
-            Text(
-                text = "Back",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                color = KatibaColors.KenyaGreen
-            )
-        }
+            isLoading = isLoading,
+            enabled = !isLoading
+        )
     }
 }
 
@@ -494,8 +447,7 @@ private fun NewPasswordStep(
     onPasswordVisibilityToggle: () -> Unit,
     onConfirmPasswordVisibilityToggle: () -> Unit,
     isLoading: Boolean,
-    onResetPassword: () -> Unit,
-    onBack: () -> Unit
+    onResetPassword: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -561,13 +513,61 @@ private fun NewPasswordStep(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Button(
+        // Physical button with press animation
+        PhysicalButton(
+            text = "Reset Password",
             onClick = onResetPassword,
+            isLoading = isLoading,
+            enabled = !isLoading
+        )
+    }
+}
+
+/**
+ * Reusable physical button with shadow and press animation
+ */
+@Composable
+private fun PhysicalButton(
+    text: String,
+    onClick: () -> Unit,
+    isLoading: Boolean,
+    enabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val pressOffset by animateDpAsState(
+        targetValue = if (isPressed) 4.dp else 0.dp,
+        animationSpec = tween(durationMillis = 100)
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(60.dp)
+    ) {
+        // Bottom shadow layer
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(56.dp)
+                .align(Alignment.BottomCenter)
+                .background(
+                    color = KatibaColors.DarkGreen,
+                    shape = RoundedCornerShape(16.dp)
+                )
+        )
+        // Main button with press animation
+        Button(
+            onClick = onClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .align(Alignment.TopCenter)
+                .offset(y = pressOffset),
+            enabled = enabled,
             shape = RoundedCornerShape(16.dp),
-            enabled = !isLoading,
+            interactionSource = interactionSource,
             colors = ButtonDefaults.buttonColors(
                 containerColor = KatibaColors.KenyaGreen,
                 contentColor = Color.White
@@ -581,33 +581,32 @@ private fun NewPasswordStep(
                 )
             } else {
                 Text(
-                    text = "Reset Password",
+                    text = text,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = onBack,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.outlinedButtonColors()
-        ) {
-            Text(
-                text = "Back",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium,
-                color = KatibaColors.KenyaGreen
-            )
-        }
     }
 }
+
+// Back arrow icon
+private val ForgotBackArrowIcon: ImageVector
+    get() = ImageVector.Builder(
+        name = "ForgotBackArrow", defaultWidth = 24.dp, defaultHeight = 24.dp,
+        viewportWidth = 24f, viewportHeight = 24f
+    ).apply {
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(19f, 12f)
+            horizontalLineTo(5f)
+        }
+        path(fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2f) {
+            moveTo(12f, 19f)
+            lineTo(5f, 12f)
+            lineTo(12f, 5f)
+        }
+    }.build()
 
 // ─── Custom Vector Icons ────────────────────────────────────────────────────
 

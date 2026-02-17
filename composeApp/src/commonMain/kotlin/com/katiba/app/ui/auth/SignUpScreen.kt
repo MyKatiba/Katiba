@@ -1,10 +1,13 @@
 package com.katiba.app.ui.auth
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -267,76 +271,86 @@ fun SignUpScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // Sign up button with physical shadow
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-            ) {
+            // Sign up button with physical shadow and press animation
+            run {
+                val signUpInteractionSource = remember { MutableInteractionSource() }
+                val isSignUpPressed by signUpInteractionSource.collectIsPressedAsState()
+                val signUpPressOffset by animateDpAsState(
+                    targetValue = if (isSignUpPressed) 4.dp else 0.dp,
+                    animationSpec = tween(durationMillis = 100)
+                )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
-                        .align(Alignment.BottomCenter)
-                        .background(KatibaColors.DarkGreen, RoundedCornerShape(16.dp))
-                )
-                Button(
-                    onClick = {
-                        when {
-                            fullName.isBlank() -> errorMessage = "Please enter your full name"
-                            email.isBlank() -> errorMessage = "Please enter your email"
-                            password.isBlank() -> errorMessage = "Please enter a password"
-                            confirmPassword.isBlank() -> errorMessage = "Please confirm your password"
-                            password != confirmPassword -> errorMessage = "Passwords do not match"
-                            password.length < 6 -> errorMessage = "Password must be at least 6 characters"
-                            !email.contains("@") -> errorMessage = "Please enter a valid email"
-                            else -> {
-                                coroutineScope.launch {
-                                    isLoading = true
-                                    errorMessage = null
+                        .height(60.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(KatibaColors.DarkGreen, RoundedCornerShape(16.dp))
+                    )
+                    Button(
+                        onClick = {
+                            when {
+                                fullName.isBlank() -> errorMessage = "Please enter your full name"
+                                email.isBlank() -> errorMessage = "Please enter your email"
+                                password.isBlank() -> errorMessage = "Please enter a password"
+                                confirmPassword.isBlank() -> errorMessage = "Please confirm your password"
+                                password != confirmPassword -> errorMessage = "Passwords do not match"
+                                password.length < 6 -> errorMessage = "Password must be at least 6 characters"
+                                !email.contains("@") -> errorMessage = "Please enter a valid email"
+                                else -> {
+                                    coroutineScope.launch {
+                                        isLoading = true
+                                        errorMessage = null
 
-                                    val result = authRepository.registerWithEmail(
-                                        name = fullName,
-                                        email = email,
-                                        password = password,
-                                        confirmPassword = confirmPassword
-                                    )
+                                        val result = authRepository.registerWithEmail(
+                                            name = fullName,
+                                            email = email,
+                                            password = password,
+                                            confirmPassword = confirmPassword
+                                        )
 
-                                    isLoading = false
+                                        isLoading = false
 
-                                    if (result.isSuccess) {
-                                        val userId = result.getOrThrow()
-                                        onSignUpSuccess(userId, email)
-                                    } else {
-                                        errorMessage = result.exceptionOrNull()?.message ?: "Registration failed"
+                                        if (result.isSuccess) {
+                                            val userId = result.getOrThrow()
+                                            onSignUpSuccess(userId, email)
+                                        } else {
+                                            errorMessage = result.exceptionOrNull()?.message ?: "Registration failed"
+                                        }
                                     }
                                 }
                             }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .align(Alignment.TopCenter)
+                            .offset(y = signUpPressOffset),
+                        enabled = !isLoading,
+                        shape = RoundedCornerShape(16.dp),
+                        interactionSource = signUpInteractionSource,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = KatibaColors.KenyaGreen,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White
+                            )
+                        } else {
+                            Text(
+                                text = "Sign Up",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
                         }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .align(Alignment.TopCenter),
-                    enabled = !isLoading,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = KatibaColors.KenyaGreen,
-                        contentColor = Color.White
-                    )
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color.White
-                        )
-                    } else {
-                        Text(
-                            text = "Sign Up",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
                     }
                 }
             }
@@ -360,66 +374,76 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Google sign up button with shadow
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-            ) {
+            // Google sign up button with shadow and press animation
+            run {
+                val googleInteractionSource = remember { MutableInteractionSource() }
+                val isGooglePressed by googleInteractionSource.collectIsPressedAsState()
+                val googlePressOffset by animateDpAsState(
+                    targetValue = if (isGooglePressed) 4.dp else 0.dp,
+                    animationSpec = tween(durationMillis = 100)
+                )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
-                        .align(Alignment.BottomCenter)
-                        .background(Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-                )
-                OutlinedButton(
-                    onClick = {
-                        if (googleSignInService == null) {
-                            errorMessage = "Google Sign-Up not supported on this device"
-                            return@OutlinedButton
-                        }
-
-                        coroutineScope.launch {
-                            isLoading = true
-                            errorMessage = null
-                            val signInResult = googleSignInService.signIn()
-                            if (signInResult.isSuccess) {
-                                val idToken = signInResult.getOrThrow()
-                                val authResult = authRepository.loginWithGoogle(idToken)
-                                isLoading = false
-                                if (authResult.isSuccess) {
-                                    onGoogleSignUpSuccess()
-                                } else {
-                                    errorMessage = authResult.exceptionOrNull()?.message ?: "Google Auth failed"
-                                }
-                            } else {
-                                isLoading = false
-                                errorMessage = signInResult.exceptionOrNull()?.message ?: "Google Sign-In canceled or failed"
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .align(Alignment.TopCenter),
-                    shape = RoundedCornerShape(16.dp),
-                    border = ButtonDefaults.outlinedButtonBorder(enabled = true),
-                    enabled = !isLoading
+                        .height(60.dp)
                 ) {
-                    Icon(
-                        imageVector = GoogleIcon,
-                        contentDescription = "Google",
-                        modifier = Modifier.size(20.dp),
-                        tint = Color.Unspecified
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(Color.Gray.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
                     )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Sign up with Google",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    OutlinedButton(
+                        onClick = {
+                            if (googleSignInService == null) {
+                                errorMessage = "Google Sign-Up not supported on this device"
+                                return@OutlinedButton
+                            }
+
+                            coroutineScope.launch {
+                                isLoading = true
+                                errorMessage = null
+                                val signInResult = googleSignInService.signIn()
+                                if (signInResult.isSuccess) {
+                                    val idToken = signInResult.getOrThrow()
+                                    val authResult = authRepository.loginWithGoogle(idToken)
+                                    isLoading = false
+                                    if (authResult.isSuccess) {
+                                        onGoogleSignUpSuccess()
+                                    } else {
+                                        errorMessage = authResult.exceptionOrNull()?.message ?: "Google Auth failed"
+                                    }
+                                } else {
+                                    isLoading = false
+                                    errorMessage = signInResult.exceptionOrNull()?.message ?: "Google Sign-In canceled or failed"
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .align(Alignment.TopCenter)
+                            .offset(y = googlePressOffset),
+                        shape = RoundedCornerShape(16.dp),
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true),
+                        interactionSource = googleInteractionSource,
+                        enabled = !isLoading
+                    ) {
+                        Icon(
+                            imageVector = GoogleIcon,
+                            contentDescription = "Google",
+                            modifier = Modifier.size(20.dp),
+                            tint = Color.Unspecified
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Sign up with Google",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
 

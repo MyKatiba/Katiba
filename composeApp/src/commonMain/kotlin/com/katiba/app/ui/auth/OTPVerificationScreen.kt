@@ -2,12 +2,15 @@ package com.katiba.app.ui.auth
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -246,64 +249,74 @@ fun OTPVerificationScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Verify button with solid/physical shadow styling
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp)
-            ) {
-                // Bottom shadow layer
+            // Verify button with solid/physical shadow styling and press animation
+            run {
+                val verifyInteractionSource = remember { MutableInteractionSource() }
+                val isVerifyPressed by verifyInteractionSource.collectIsPressedAsState()
+                val verifyPressOffset by animateDpAsState(
+                    targetValue = if (isVerifyPressed) 4.dp else 0.dp,
+                    animationSpec = tween(durationMillis = 100)
+                )
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp)
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            color = KatibaColors.DarkGreen,
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                )
-                // Main button
-                Button(
-                    onClick = {
-                        val otp = otpDigits.joinToString("")
-                        if (otp.length == 6) {
-                            coroutineScope.launch {
-                                verifyOtp(
-                                    authRepository,
-                                    userId,
-                                    otp,
-                                    purpose,
-                                    onVerificationSuccess,
-                                    onError = { errorMessage = it },
-                                    onLoadingChange = { isLoading = it }
-                                )
-                            }
-                        } else {
-                            errorMessage = "Please enter all 6 digits"
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .align(Alignment.TopCenter),
-                    enabled = !isLoading && otpDigits.all { it.isNotEmpty() },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = KatibaColors.KenyaGreen
-                    )
+                        .height(60.dp)
                 ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color.White
+                    // Bottom shadow layer
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(
+                                color = KatibaColors.DarkGreen,
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                    )
+                    // Main button
+                    Button(
+                        onClick = {
+                            val otp = otpDigits.joinToString("")
+                            if (otp.length == 6) {
+                                coroutineScope.launch {
+                                    verifyOtp(
+                                        authRepository,
+                                        userId,
+                                        otp,
+                                        purpose,
+                                        onVerificationSuccess,
+                                        onError = { errorMessage = it },
+                                        onLoadingChange = { isLoading = it }
+                                    )
+                                }
+                            } else {
+                                errorMessage = "Please enter all 6 digits"
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .align(Alignment.TopCenter)
+                            .offset(y = verifyPressOffset),
+                        enabled = !isLoading && otpDigits.all { it.isNotEmpty() },
+                        shape = RoundedCornerShape(16.dp),
+                        interactionSource = verifyInteractionSource,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = KatibaColors.KenyaGreen
                         )
-                    } else {
-                        Text(
-                            text = "Verify",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White
+                            )
+                        } else {
+                            Text(
+                                text = "Verify",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
