@@ -17,8 +17,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val googleSignInService = com.katiba.app.data.service.AndroidGoogleSignInService(
-            context = this,
-             // Web Client ID from google-services.json
+            activity = this,
+            // Web Client ID from Firebase Console (must be the WEB client, not Android client)
             serverClientId = "576740059155-a2u27m9dscc6na0pe3md9lgl1s0t3rsf.apps.googleusercontent.com"
         )
         
