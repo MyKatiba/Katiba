@@ -1,29 +1,76 @@
 package com.katiba.app.data.repository
 
+import com.russhwolf.settings.Settings
+import com.russhwolf.settings.get
+import com.russhwolf.settings.set
 import kotlinx.datetime.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 /**
  * Manages user streak tracking for daily app usage.
  * Streak increments when user opens app on consecutive days.
  * Resets to 1 if user misses a day.
+ * Data is persisted using multiplatform-settings.
  */
 object StreakManager {
-    private var currentStreak: Int = 0
-    private var bestStreak: Int = 0
-    private var lastAccessDate: String? = null
+    private val settings: Settings = Settings()
+    private val json = Json { ignoreUnknownKeys = true }
+    
+    // Settings keys
+    private const val KEY_CURRENT_STREAK = "streak_current"
+    private const val KEY_BEST_STREAK = "streak_best"
+    private const val KEY_LAST_ACCESS_DATE = "streak_last_access"
+    private const val KEY_DAILY_REFRESH_STREAK = "streak_daily_refresh"
+    private const val KEY_BEST_DAILY_REFRESH_STREAK = "streak_best_daily_refresh"
+    private const val KEY_LAST_REFRESH_DATE = "streak_last_refresh"
+    private const val KEY_STREAK_HISTORY = "streak_history"
+    
+    private var currentStreak: Int = settings[KEY_CURRENT_STREAK, 0]
+    private var bestStreak: Int = settings[KEY_BEST_STREAK, 0]
+    private var lastAccessDate: String? = settings.getStringOrNull(KEY_LAST_ACCESS_DATE)
     
     // Daily Refresh Streak tracking
-    private var dailyRefreshStreak: Int = 0
-    private var bestDailyRefreshStreak: Int = 0
-    private var lastRefreshDate: String? = null
+    private var dailyRefreshStreak: Int = settings[KEY_DAILY_REFRESH_STREAK, 0]
+    private var bestDailyRefreshStreak: Int = settings[KEY_BEST_DAILY_REFRESH_STREAK, 0]
+    private var lastRefreshDate: String? = settings.getStringOrNull(KEY_LAST_REFRESH_DATE)
     
     // Store dates for past 7 days with streak info
-    private val streakHistory = mutableMapOf<String, StreakData>()
+    private val streakHistory: MutableMap<String, StreakData> = loadStreakHistory()
     
+    @Serializable
     data class StreakData(
         val hasAppStreak: Boolean = false,
         val hasDailyRefresh: Boolean = false
     )
+    
+    private fun loadStreakHistory(): MutableMap<String, StreakData> {
+        val historyJson = settings.getStringOrNull(KEY_STREAK_HISTORY) ?: return mutableMapOf()
+        return try {
+            json.decodeFromString<Map<String, StreakData>>(historyJson).toMutableMap()
+        } catch (e: Exception) {
+            mutableMapOf()
+        }
+    }
+    
+    private fun saveStreakHistory() {
+        settings[KEY_STREAK_HISTORY] = json.encodeToString(streakHistory.toMap())
+    }
+    
+    private fun saveState() {
+        settings[KEY_CURRENT_STREAK] = currentStreak
+        settings[KEY_BEST_STREAK] = bestStreak
+        if (lastAccessDate != null) {
+            settings[KEY_LAST_ACCESS_DATE] = lastAccessDate!!
+        }
+        settings[KEY_DAILY_REFRESH_STREAK] = dailyRefreshStreak
+        settings[KEY_BEST_DAILY_REFRESH_STREAK] = bestDailyRefreshStreak
+        if (lastRefreshDate != null) {
+            settings[KEY_LAST_REFRESH_DATE] = lastRefreshDate!!
+        }
+        saveStreakHistory()
+    }
     
     /**
      * Call this when the app launches to check and update streak.
@@ -64,6 +111,9 @@ object StreakManager {
         // Update streak history for today
         val currentData = streakHistory.getOrDefault(today, StreakData())
         streakHistory[today] = currentData.copy(hasAppStreak = true)
+        
+        // Persist changes
+        saveState()
         
         return currentStreak
     }
@@ -106,6 +156,9 @@ object StreakManager {
         // Update streak history for today
         val currentData = streakHistory.getOrDefault(today, StreakData())
         streakHistory[today] = currentData.copy(hasDailyRefresh = true)
+        
+        // Persist changes
+        saveState()
     }
     
     /**
@@ -152,7 +205,7 @@ object StreakManager {
     fun getLastAccessDate(): String? = lastAccessDate
     
     /**
-     * Reset streak (for testing purposes).
+     * Reset streak (for testing purposes or sign out).
      */
     fun resetStreak() {
         currentStreak = 0
@@ -162,6 +215,15 @@ object StreakManager {
         bestDailyRefreshStreak = 0
         lastRefreshDate = null
         streakHistory.clear()
+        
+        // Clear persisted data
+        settings.remove(KEY_CURRENT_STREAK)
+        settings.remove(KEY_BEST_STREAK)
+        settings.remove(KEY_LAST_ACCESS_DATE)
+        settings.remove(KEY_DAILY_REFRESH_STREAK)
+        settings.remove(KEY_BEST_DAILY_REFRESH_STREAK)
+        settings.remove(KEY_LAST_REFRESH_DATE)
+        settings.remove(KEY_STREAK_HISTORY)
     }
     
     /**
@@ -171,6 +233,7 @@ object StreakManager {
         currentStreak = streak
         lastAccessDate = dateString
         bestStreak = best
+        saveState()
     }
     
     /**

@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.katiba.app.data.AppPreferences
 import com.katiba.app.data.repository.ConstitutionRepository
 import com.katiba.app.ui.auth.CivicDataInputScreen
 import com.katiba.app.ui.auth.ForgotPasswordScreen
@@ -102,8 +103,15 @@ private fun AppContent(
     googleSignInService: GoogleSignInService?,
     coroutineScope: kotlinx.coroutines.CoroutineScope
 ) {
+        // Determine initial route based on onboarding completion
+        val initialRoute: NavKey = if (AppPreferences.hasCompletedOnboarding) {
+            LoginRoute // Skip onboarding, go to login
+        } else {
+            OnboardingRoute // First time user, show onboarding
+        }
+        
         // Navigation 3 Style: You own the backstack as a mutable list
-        val backStack = rememberNavBackStack(OnboardingRoute)
+        val backStack = rememberNavBackStack(initialRoute)
 
         // Helper to get current route from backstack
         val currentKey = backStack.lastOrNull()
@@ -150,15 +158,56 @@ private fun AppContent(
         val currentUser by authRepository.currentUser.collectAsState(initial = null)
         
         // Determine if bottom bar should be shown
-        // ClauseDetailRoute and other detail screens don't show the bottom bar
-        // Also hide bottom bar if on ProfileRoute but user is not authenticated (showing login/signup)
+        // Only show bottom bar when user is authenticated
         val showBottomBar = remember(currentKey, currentUser) {
-            when {
-                currentKey is HomeRoute -> true
-                currentKey is ConstitutionRoute -> true
-                currentKey is PlansRoute -> true
-                currentKey is ProfileRoute -> currentUser != null // Only show if authenticated
+            currentUser != null && when (currentKey) {
+                is HomeRoute -> true
+                is ConstitutionRoute -> true
+                is PlansRoute -> true
+                is ProfileRoute -> true
                 else -> false
+            }
+        }
+        
+        // Redirect to login if user is not authenticated and tries to access protected routes
+        LaunchedEffect(currentUser, currentKey) {
+            if (currentUser == null) {
+                val isProtectedRoute = when (currentKey) {
+                    is HomeRoute,
+                    is ConstitutionRoute,
+                    is PlansRoute,
+                    is ProfileRoute,
+                    is ClauseDetailRoute,
+                    is AIDescriptionRoute,
+                    is TipsRoute,
+                    is MzalendoRoute,
+                    is NotificationsRoute,
+                    is ChapterListRoute,
+                    is ClauseGridRoute,
+                    is ReadingRoute,
+                    is LessonRoute,
+                    is SettingsRoute,
+                    is EditProfileRoute,
+                    is PasswordSecurityRoute,
+                    is UpdateResidenceRoute,
+                    is NationalIDRoute,
+                    is AppearanceRoute,
+                    is FontSizeRoute,
+                    is LanguageRoute,
+                    is AboutKatibaRoute,
+                    is SendFeedbackRoute -> true
+                    else -> false
+                }
+                
+                if (isProtectedRoute) {
+                    // Redirect to login
+                    backStack.clear()
+                    if (AppPreferences.hasCompletedOnboarding) {
+                        backStack.add(LoginRoute)
+                    } else {
+                        backStack.add(OnboardingRoute)
+                    }
+                }
             }
         }
 
@@ -209,6 +258,8 @@ private fun AppContent(
                     entry<OnboardingRoute> {
                         OnboardingScreen(
                             onGetStarted = {
+                                // Mark onboarding as completed
+                                AppPreferences.hasCompletedOnboarding = true
                                 backStack.add(LoginRoute)
                             }
                         )
@@ -472,10 +523,9 @@ private fun AppContent(
                             onSignOut = {
                                 coroutineScope.launch {
                                     authRepository.signOut()
-                                    // Clear entire backstack and navigate to ProfileRoute
-                                    // This prevents going back and ensures login screen shows
+                                    // Clear entire backstack and navigate to LoginRoute
                                     backStack.clear()
-                                    backStack.add(ProfileRoute)
+                                    backStack.add(LoginRoute)
                                 }
                             },
                             onEditProfile = { backStack.add(EditProfileRoute) },

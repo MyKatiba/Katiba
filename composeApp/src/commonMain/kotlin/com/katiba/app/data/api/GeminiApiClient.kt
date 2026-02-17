@@ -1,8 +1,11 @@
 package com.katiba.app.data.api
 
+import kotlinx.serialization.Serializable
+
 /**
  * Represents a chat message in the conversation.
  */
+@Serializable
 data class ChatMessage(
     val content: String,
     val isUser: Boolean,
