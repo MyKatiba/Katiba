@@ -373,7 +373,7 @@ private fun ClauseDetailPage(
             
             // Chapter and Article subtitle
             Text(
-                text = "Chapter ${dailyContent.chapterTitle.split(" ").firstOrNull()?.filter { it.isDigit() } ?: ""}, Article ${dailyContent.articleNumber}",
+                text = "Chapter ${dailyContent.chapterNumber}, Article ${dailyContent.articleNumber}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray,
                 textAlign = TextAlign.Center

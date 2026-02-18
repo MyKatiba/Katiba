@@ -60,6 +60,7 @@ object SampleDataRepository {
                     id = "daily_${date}_${article.number}",
                     date = date,
                     clause = clause,
+                    chapterNumber = chapter.number,
                     chapterTitle = chapter.title,
                     articleTitle = article.title,
                     articleNumber = article.number,
@@ -84,6 +85,7 @@ object SampleDataRepository {
                 text = "Every person has the right to life. The life of a person begins at conception.",
                 subClauses = emptyList()
             ),
+            chapterNumber = 4,
             chapterTitle = "The Bill of Rights",
             articleTitle = "Right to life",
             articleNumber = 26,

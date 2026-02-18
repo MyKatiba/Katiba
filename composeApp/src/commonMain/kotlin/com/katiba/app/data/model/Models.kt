@@ -92,6 +92,7 @@ data class DailyContent(
     val id: String,
     val date: String, // ISO date format
     val clause: Clause,
+    val chapterNumber: Int,
     val chapterTitle: String,
     val articleTitle: String,
     val articleNumber: Int,
