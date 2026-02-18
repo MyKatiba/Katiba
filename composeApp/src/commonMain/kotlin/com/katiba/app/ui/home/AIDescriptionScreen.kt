@@ -360,6 +360,25 @@ private fun ClauseDetailPage(
                 )
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Chapter title (bold)
+            Text(
+                text = dailyContent.chapterTitle.split(" - ").lastOrNull() ?: dailyContent.chapterTitle,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                textAlign = TextAlign.Center
+            )
+            
+            // Chapter and Article subtitle
+            Text(
+                text = "Chapter ${dailyContent.chapterTitle.split(" ").firstOrNull()?.filter { it.isDigit() } ?: ""}, Article ${dailyContent.articleNumber}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                textAlign = TextAlign.Center
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Clause card with beadwork accent on left
@@ -448,6 +467,35 @@ private fun ClauseDetailPage(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // Beadwork accent line below text (Kenya flag colors - horizontal)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(0.25f)
+                                .height(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .background(KatibaColors.KenyaBlack)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .background(KatibaColors.KenyaRed)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .background(KatibaColors.KenyaGreen)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+
                         // Constitution source
                         Text(
                             text = "Constitution of Kenya, 2010",
@@ -462,17 +510,16 @@ private fun ClauseDetailPage(
 
             // Understanding this clause section
             Column(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Yellow lightbulb icon
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = null,
-                        tint = Color(0xFFFFD700), // Bright yellow/gold
-                        modifier = Modifier.size(24.dp)
+                    // Yellow lightbulb emoji
+                    Text(
+                        text = "💡",
+                        style = MaterialTheme.typography.titleLarge
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
@@ -490,6 +537,7 @@ private fun ClauseDetailPage(
                     text = dailyContent.aiDescription,
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Black.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Start,
                     lineHeight = 24.sp
                 )
             }

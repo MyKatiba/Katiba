@@ -26,10 +26,16 @@ fun EditProfileScreen(
     onBackClick: () -> Unit,
     onSave: (name: String, email: String) -> Unit,
     initialName: String = "",
-    initialEmail: String = ""
+    initialEmail: String = "",
+    initialGender: String = "",
+    initialPhoneNumber: String = ""
 ) {
     var name by remember { mutableStateOf(initialName) }
     var email by remember { mutableStateOf(initialEmail) }
+    var gender by remember { mutableStateOf(initialGender) }
+    var phoneNumber by remember { mutableStateOf(initialPhoneNumber) }
+    var genderExpanded by remember { mutableStateOf(false) }
+    val genderOptions = listOf("Male", "Female", "Other", "Prefer not to say")
     
     Scaffold(
         topBar = {
@@ -52,7 +58,8 @@ fun EditProfileScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background
-                    )
+                    ),
+                    windowInsets = WindowInsets(0.dp)
                 )
                 HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
             }
@@ -79,6 +86,48 @@ fun EditProfileScreen(
                 label = { Text("Email Address") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                shape = RoundedCornerShape(12.dp)
+            )
+            
+            // Gender dropdown
+            ExposedDropdownMenuBox(
+                expanded = genderExpanded,
+                onExpandedChange = { genderExpanded = !genderExpanded }
+            ) {
+                OutlinedTextField(
+                    value = gender,
+                    onValueChange = { },
+                    readOnly = true,
+                    label = { Text("Gender") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = genderExpanded) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                ExposedDropdownMenu(
+                    expanded = genderExpanded,
+                    onDismissRequest = { genderExpanded = false }
+                ) {
+                    genderOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                gender = option
+                                genderExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+            
+            OutlinedTextField(
+                value = phoneNumber,
+                onValueChange = { phoneNumber = it },
+                label = { Text("Phone Number") },
+                placeholder = { Text("+254 712 345 678") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 shape = RoundedCornerShape(12.dp)
             )
             
@@ -139,7 +188,8 @@ fun PasswordSecurityScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background
-                    )
+                    ),
+                    windowInsets = WindowInsets(0.dp)
                 )
                 HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
             }
@@ -284,7 +334,8 @@ fun UpdateResidenceScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background
-                    )
+                    ),
+                    windowInsets = WindowInsets(0.dp)
                 )
                 HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
             }
