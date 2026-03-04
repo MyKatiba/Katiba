@@ -21,21 +21,6 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,9 +39,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import com.katiba.app.data.model.Badge
 import com.katiba.app.data.model.UserProfile
 import com.katiba.app.data.repository.ArticleReadManager
+import com.katiba.app.data.repository.BookmarkManager
 import com.katiba.app.data.repository.SampleDataRepository
 import com.katiba.app.data.repository.StreakManager
 import com.katiba.app.ui.theme.KatibaColors
@@ -135,6 +123,7 @@ fun ProfileScreen(
     var showCivicDataSheet by remember { mutableStateOf(false) }
     var showStreakSheet by remember { mutableStateOf(false) }
     var showAchievementsSheet by remember { mutableStateOf(false) }
+    var showBookmarksSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
     val achievementsSheetState = rememberModalBottomSheetState()
 
@@ -157,50 +146,29 @@ fun ProfileScreen(
     // Use a shortened lesson title for display (e.g., "Right to Life" instead of full title)
     val nextLessonDisplay = nextLesson?.title?.removePrefix("Your ")?.removePrefix("The ") ?: "Complete!"
 
+    val scrollState = rememberScrollState()
+    val headerAlpha by animateFloatAsState(
+        targetValue = if (scrollState.value > 40) 1f else 0f,
+        animationSpec = tween(durationMillis = 250),
+        label = "profileHeaderAlpha"
+    )
+
     Scaffold(
-        containerColor = KatibaColors.Background,
-        topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Profile",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    actions = {
-                        IconButton(
-                            onClick = onSettingsClick,
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "Settings",
-                                tint = Color.Gray
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    ),
-                    windowInsets = WindowInsets(0.dp)
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
-        }
+        containerColor = MaterialTheme.colorScheme.background,
     ) { paddingValues ->
 
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
         // Scrollable content
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = 20.dp)
-                .padding(top = 10.dp, bottom = 24.dp),
+                .padding(top = 72.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Profile Card
@@ -228,6 +196,11 @@ fun ProfileScreen(
                 onClick = { showAchievementsSheet = true }
             )
 
+            // Bookmarks Section
+            BookmarksCard(
+                onClick = { showBookmarksSheet = true }
+            )
+
             // Current Course Section
             CurrentCourseCard(
                 chapterNumber = currentChapter,
@@ -248,6 +221,37 @@ fun ProfileScreen(
                 onClick = { showCivicDataSheet = true }
             )
         }
+
+        // Floating header
+        TopAppBar(
+            title = {
+                Text(
+                    text = "Profile",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            actions = {
+                IconButton(
+                    onClick = onSettingsClick,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            windowInsets = WindowInsets(0.dp),
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
+        } // end Box
     }
     
     // Civic Data Bottom Sheet
@@ -274,6 +278,13 @@ fun ProfileScreen(
             sheetState = achievementsSheetState,
             badges = userProfile.badges,
             onDismiss = { showAchievementsSheet = false }
+        )
+    }
+
+    // Bookmarks Bottom Sheet
+    if (showBookmarksSheet) {
+        BookmarksBottomSheet(
+            onDismiss = { showBookmarksSheet = false }
         )
     }
 }
@@ -305,29 +316,31 @@ private fun BeadworkBorder() {
 
 @Composable
 private fun ProfileCard(userProfile: UserProfile) {
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(210.dp)
+            .height(200.dp)
             .shadow(
                 elevation = 8.dp,
                 shape = RoundedCornerShape(24.dp),
                 spotColor = Color.Black.copy(alpha = 0.1f)
             ),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = surfaceColor)
     ) {
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Light gray background with abstract pale white patterns
+            // Surface variant background with abstract pale patterns
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFE8E8E8)) // Consistent light gray
+                    .background(surfaceVariantColor) // Theme-aware surface variant
                     .clip(RoundedCornerShape(24.dp))
                     .drawBehind {
-                        // Draw pale white abstract circles
+                        // Draw pale abstract circles
                         drawCircle(
                             color = Color.White.copy(alpha = 0.6f),
                             radius = 120.dp.toPx(),
@@ -382,7 +395,7 @@ private fun ProfileCard(userProfile: UserProfile) {
                         modifier = Modifier
                             .size(96.dp)
                             .clip(CircleShape)
-                            .border(4.dp, Color.White, CircleShape)
+                            .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape)
                             .shadow(8.dp, CircleShape)
                             .background(
                                 brush = Brush.verticalGradient(
@@ -415,13 +428,13 @@ private fun ProfileCard(userProfile: UserProfile) {
                         text = userProfile.name,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = KatibaColors.KenyaBlack
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "User Since 2026",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -449,7 +462,7 @@ private fun StatCard(
                 spotColor = Color.Black.copy(alpha = 0.05f)
             ),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Box(
             modifier = Modifier.fillMaxWidth()
@@ -489,7 +502,7 @@ private fun StatCard(
                     text = value,
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.ExtraBold,
-                    color = KatibaColors.KenyaBlack
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 // Label
@@ -497,7 +510,7 @@ private fun StatCard(
                     text = label,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.sp
                 )
             }
@@ -520,7 +533,7 @@ private fun StreakStatCard(
                 spotColor = Color.Black.copy(alpha = 0.05f)
             ),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Box(
             modifier = Modifier.fillMaxWidth()
@@ -556,7 +569,7 @@ private fun StreakStatCard(
                         Icon(
                             imageVector = if (streakCount > 0) BoltIconFilled else BoltIconOutline,
                             contentDescription = "Streak",
-                            tint = if (streakCount > 0) Color(0xFFFFD700) else Color.Gray,
+                            tint = if (streakCount > 0) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -566,7 +579,7 @@ private fun StreakStatCard(
                         text = streakCount.toString(),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = KatibaColors.KenyaBlack
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -577,7 +590,7 @@ private fun StreakStatCard(
                     text = "DAY STREAK",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.sp
                 )
             }
@@ -598,7 +611,7 @@ private fun ArticlesReadStatCard(
                 spotColor = Color.Black.copy(alpha = 0.05f)
             ),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Box(
             modifier = Modifier.fillMaxWidth()
@@ -628,13 +641,13 @@ private fun ArticlesReadStatCard(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFF9FAFB)), // Grey-50
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = BookIcon,
                             contentDescription = "Articles Read",
-                            tint = Color.Gray,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -644,7 +657,7 @@ private fun ArticlesReadStatCard(
                         text = articlesCount.toString(),
                         style = MaterialTheme.typography.headlineLarge,
                         fontWeight = FontWeight.ExtraBold,
-                        color = KatibaColors.KenyaBlack
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -655,7 +668,7 @@ private fun ArticlesReadStatCard(
                     text = "ARTICLES READ",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.sp
                 )
             }
@@ -708,7 +721,7 @@ private fun StreakBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
@@ -748,34 +761,34 @@ private fun StreakBottomSheet(
                             imageVector = if (currentStreak > 0) BoltIconFilled else BoltIconOutline,
                             contentDescription = null,
                             modifier = Modifier.size(32.dp),
-                            tint = if (currentStreak > 0) Color(0xFFFFD700) else Color.Gray
+                            tint = if (currentStreak > 0) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "$currentStreak",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (currentStreak > 0) Color.Black else Color.Gray
+                            color = if (currentStreak > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Text("App Streak", color = Color.Gray)
+                    Text("App Streak", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = if (bestStreak > 0) BoltIconFilled else BoltIconOutline,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = if (bestStreak > 0) Color(0xFFFFD700) else Color.Gray
+                            tint = if (bestStreak > 0) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "$bestStreak Best",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (bestStreak > 0) Color.Black else Color.Gray
+                            color = if (bestStreak > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                Box(modifier = Modifier.width(1.dp).height(80.dp).background(Color.LightGray))
+                Box(modifier = Modifier.width(1.dp).height(80.dp).background(MaterialTheme.colorScheme.outlineVariant))
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -783,29 +796,29 @@ private fun StreakBottomSheet(
                             imageVector = Icons.Default.Favorite,
                             contentDescription = null,
                             modifier = Modifier.size(32.dp),
-                            tint = if (dailyRefreshStreak > 0) KatibaColors.KenyaGreen else Color.Gray
+                            tint = if (dailyRefreshStreak > 0) KatibaColors.KenyaGreen else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "$dailyRefreshStreak",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (dailyRefreshStreak > 0) Color.Black else Color.Gray
+                            color = if (dailyRefreshStreak > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Text("Daily Refresh Streak", color = Color.Gray, fontSize = 12.sp, textAlign = TextAlign.Center)
+                    Text("Daily Refresh Streak", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Favorite,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = if (bestDailyRefreshStreak > 0) KatibaColors.KenyaGreen else Color.Gray
+                            tint = if (bestDailyRefreshStreak > 0) KatibaColors.KenyaGreen else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "$bestDailyRefreshStreak Best",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (bestDailyRefreshStreak > 0) Color.Black else Color.Gray
+                            color = if (bestDailyRefreshStreak > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -825,11 +838,11 @@ private fun StreakBottomSheet(
                 )
                 Text(
                     text = "$currentStreak ${if (currentStreak == 1) "day" else "days"} in the Katiba App",
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Text("Start your streak today!", fontWeight = FontWeight.Bold)
-                Text("Open the app daily to build your habit", color = Color.Gray)
+                Text("Open the app daily to build your habit", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -862,7 +875,7 @@ private fun StreakBottomSheet(
                             modifier = Modifier
                                 .size(32.dp)
                                 .let { 
-                                    if (isToday) it.border(1.dp, Color.Black, CircleShape)
+                                    if (isToday) it.border(1.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
                                     else it
                                 },
                             contentAlignment = Alignment.Center
@@ -883,7 +896,7 @@ private fun StreakBottomSheet(
                                     modifier = Modifier
                                         .align(Alignment.BottomStart)
                                         .size(5.dp)
-                                        .background(Color.Gray, CircleShape)
+                                        .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
                                 )
                             }
                         }
@@ -948,6 +961,9 @@ private fun AchievementsCard(
     badges: List<Badge>,
     onClick: () -> Unit
 ) {
+    val earnedCount = badges.count { it.isEarned }
+    val totalCount = badges.size
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -958,7 +974,7 @@ private fun AchievementsCard(
                 spotColor = Color.Black.copy(alpha = 0.1f)
             ),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
@@ -971,36 +987,77 @@ private fun AchievementsCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        text = "🏆",
-                        fontSize = 24.sp
-                    )
-                    Text(
-                        text = "Achievements",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = KatibaColors.KenyaBlack
-                    )
-                }
                 Text(
-                    text = "${badges.count { it.isEarned }} earned",
+                    text = "Achievements",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "$earnedCount of $totalCount earned",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Brief description
-            Text(
-                text = "Track your civic learning journey and unlock achievements as you progress",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
-            )
+            if (badges.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Show up to 4 badge previews
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    badges.take(4).forEach { badge ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.width(56.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (badge.isEarned) KatibaColors.BeadGold.copy(alpha = 0.2f)
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = badge.iconUrl.ifEmpty { badge.name.take(1) },
+                                    fontSize = 20.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = badge.name,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (badge.isEarned) MaterialTheme.colorScheme.onSurface
+                                       else MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+
+                if (earnedCount == 0) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Complete lessons and milestones to earn achievements",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Complete lessons and milestones to earn achievements",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
@@ -1036,7 +1093,7 @@ private fun AchievementItem(
                         )
                     }
                 )
-                .border(2.dp, Color.White, CircleShape)
+                .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
                 .then(
                     if (!isEarned) Modifier else Modifier
                 ),
@@ -1055,7 +1112,7 @@ private fun AchievementItem(
             text = name,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = if (isEarned) Color(0xFF374151) else Color(0xFF9CA3AF),
+            color = if (isEarned) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             lineHeight = 14.sp
         )
@@ -1073,7 +1130,7 @@ private fun AchievementsBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
@@ -1093,7 +1150,7 @@ private fun AchievementsBottomSheet(
             Text(
                 text = "Unlock badges by completing civic learning milestones",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
@@ -1103,7 +1160,7 @@ private fun AchievementsBottomSheet(
             Text(
                 text = "Complete lessons and milestones to earn achievements!",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
@@ -1131,7 +1188,7 @@ private fun CurrentCourseCard(
                 spotColor = Color.Black.copy(alpha = 0.1f)
             ),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
@@ -1142,7 +1199,7 @@ private fun CurrentCourseCard(
                 text = "Current Course",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = KatibaColors.KenyaBlack
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -1156,14 +1213,14 @@ private fun CurrentCourseCard(
                     modifier = Modifier
                         .size(56.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(KatibaColors.KenyaBlack),
+                        .background(MaterialTheme.colorScheme.onSurface),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = chapterNumber.toString(),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.surface
                     )
                 }
 
@@ -1175,7 +1232,7 @@ private fun CurrentCourseCard(
                         text = "Chapter $chapterNumber: $chapterTitle",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = KatibaColors.KenyaBlack
+                        color = MaterialTheme.colorScheme.onSurface
                     )
 
                     Spacer(modifier = Modifier.height(2.dp))
@@ -1183,7 +1240,7 @@ private fun CurrentCourseCard(
                     Text(
                         text = "$completedLessons of $totalLessons lessons completed",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -1194,7 +1251,7 @@ private fun CurrentCourseCard(
                             .fillMaxWidth()
                             .height(10.dp)
                             .clip(RoundedCornerShape(5.dp))
-                            .background(Color(0xFFE5E7EB))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                     ) {
                         val progress = if (totalLessons > 0) {
                             completedLessons.toFloat() / totalLessons.toFloat()
@@ -1213,7 +1270,7 @@ private fun CurrentCourseCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            HorizontalDivider(color = Color(0xFFF3F4F6))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -1226,7 +1283,7 @@ private fun CurrentCourseCard(
                 Text(
                     text = "Next Lesson: $nextLessonTitle",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
                 )
 
@@ -1264,7 +1321,7 @@ private fun CivicDataCard(
                 spotColor = Color.Black.copy(alpha = 0.1f)
             ),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
@@ -1280,7 +1337,7 @@ private fun CivicDataCard(
                     text = "My Civic Data",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = KatibaColors.KenyaBlack
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 
                 // Arrow indicator
@@ -1331,18 +1388,18 @@ private fun CivicDataRow(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = KatibaColors.KenyaBlack
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
         if (showDivider) {
-            HorizontalDivider(color = Color(0xFFF3F4F6))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         }
     }
 }
@@ -1358,7 +1415,7 @@ private fun CivicDataBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
@@ -1376,7 +1433,7 @@ private fun CivicDataBottomSheet(
                     text = "My Civic Information",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = KatibaColors.KenyaBlack
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             
@@ -1384,7 +1441,6 @@ private fun CivicDataBottomSheet(
             
             // National ID
             DetailRow(
-                icon = Icons.Default.Person,
                 label = "National ID",
                 value = userProfile.nationalId.ifEmpty { "Not set" }
             )
@@ -1393,7 +1449,6 @@ private fun CivicDataBottomSheet(
             
             // County
             DetailRow(
-                icon = Icons.Default.Place,
                 label = "County",
                 value = userProfile.county.ifEmpty { "Not set" }
             )
@@ -1402,7 +1457,6 @@ private fun CivicDataBottomSheet(
             
             // Constituency
             DetailRow(
-                icon = Icons.Default.LocationOn,
                 label = "Constituency",
                 value = userProfile.constituency.ifEmpty { "Not set" }
             )
@@ -1411,7 +1465,6 @@ private fun CivicDataBottomSheet(
             
             // Ward
             DetailRow(
-                icon = Icons.Default.Place,
                 label = "Ward",
                 value = userProfile.ward.ifEmpty { "Not set" }
             )
@@ -1426,7 +1479,7 @@ private fun CivicDataBottomSheet(
                     containerColor = if (userProfile.isRegisteredVoter) {
                         KatibaColors.KenyaGreen.copy(alpha = 0.1f)
                     } else {
-                        Color(0xFFF3F4F6)
+                        MaterialTheme.colorScheme.surfaceVariant
                     }
                 )
             ) {
@@ -1444,21 +1497,21 @@ private fun CivicDataBottomSheet(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Voter Status",
-                            tint = if (userProfile.isRegisteredVoter) KatibaColors.KenyaGreen else Color.Gray,
+                            tint = if (userProfile.isRegisteredVoter) KatibaColors.KenyaGreen else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(24.dp)
                         )
                         Column {
                             Text(
                                 text = "Voter Registration Status",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = Color.Gray,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 fontWeight = FontWeight.Medium
                             )
                             Text(
                                 text = if (userProfile.isRegisteredVoter) "Registered Voter" else "Not Registered",
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = if (userProfile.isRegisteredVoter) KatibaColors.KenyaGreen else Color.Gray
+                                color = if (userProfile.isRegisteredVoter) KatibaColors.KenyaGreen else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -1483,55 +1536,203 @@ private fun CivicDataBottomSheet(
             }
             
             Spacer(modifier = Modifier.height(24.dp))
-            
-            // Close button
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = KatibaColors.KenyaGreen
-                )
-            ) {
-                Text(
-                    text = "Close",
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-            }
         }
     }
 }
 
 @Composable
 private fun DetailRow(
-    icon: ImageVector,
     label: String,
     value: String
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = KatibaColors.KenyaGreen,
-            modifier = Modifier.size(24.dp)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Medium
         )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray,
-                fontWeight = FontWeight.Medium
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun BookmarksCard(
+    onClick: () -> Unit
+) {
+    // Use mutableIntStateOf so count refreshes on recomposition
+    val bookmarkCount = BookmarkManager.getBookmarkCount()
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Bookmarks",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = if (bookmarkCount > 0) "$bookmarkCount saved clause${if (bookmarkCount != 1) "s" else ""}" else "No saved clauses yet",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                imageVector = BookmarkIconVector,
+                contentDescription = null,
+                tint = KatibaColors.BeadGold,
+                modifier = Modifier.size(22.dp)
             )
+        }
+    }
+}
+
+// Bookmark icon for the BookmarksCard
+private val BookmarkIconVector: ImageVector
+    get() = ImageVector.Builder(
+        name = "BookmarkOutline",
+        defaultWidth = 24.dp,
+        defaultHeight = 24.dp,
+        viewportWidth = 24f,
+        viewportHeight = 24f
+    ).apply {
+        path(fill = SolidColor(Color.Black)) {
+            moveTo(17f, 3f)
+            horizontalLineTo(7f)
+            curveTo(5.9f, 3f, 5f, 3.9f, 5f, 5f)
+            verticalLineTo(21f)
+            lineTo(12f, 18f)
+            lineTo(19f, 21f)
+            verticalLineTo(5f)
+            curveTo(19f, 3.9f, 18.1f, 3f, 17f, 3f)
+            close()
+        }
+    }.build()
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BookmarksBottomSheet(
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var bookmarks by remember { mutableStateOf(BookmarkManager.getBookmarks()) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+        ) {
             Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = KatibaColors.KenyaBlack
+                text = "Bookmarks",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (bookmarks.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "🔖", style = MaterialTheme.typography.displayMedium)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "No bookmarks yet",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "Save clauses of the day to view them here",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                bookmarks.forEach { bookmark ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Chapter ${bookmark.chapterNumber} • ${bookmark.chapterTitle}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = KatibaColors.KenyaGreen,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Article ${bookmark.articleNumber} - ${bookmark.articleTitle}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "\"${bookmark.clauseText}\"",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 3,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    BookmarkManager.removeBookmark(bookmark.id)
+                                    bookmarks = BookmarkManager.getBookmarks()
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = "Remove bookmark",
+                                    tint = Color(0xFFFFD700),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

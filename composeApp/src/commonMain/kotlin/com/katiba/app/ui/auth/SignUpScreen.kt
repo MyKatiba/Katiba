@@ -62,6 +62,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
 import com.katiba.app.data.repository.AuthRepository
+import com.katiba.app.data.model.EmailNotVerifiedException
 import com.katiba.app.data.service.GoogleSignInService
 
 @Composable
@@ -70,7 +71,8 @@ fun SignUpScreen(
     googleSignInService: GoogleSignInService? = null,
     onSignUpSuccess: (String, String) -> Unit, // (userId, email)
     onGoogleSignUpSuccess: () -> Unit = {},
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
+    onNavigateToOTP: (userId: String, email: String) -> Unit = { _, _ -> }
 ) {
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -296,11 +298,14 @@ fun SignUpScreen(
                             when {
                                 fullName.isBlank() -> errorMessage = "Please enter your full name"
                                 email.isBlank() -> errorMessage = "Please enter your email"
+                                !email.contains("@") || !email.contains(".") -> errorMessage = "Please enter a valid email address"
                                 password.isBlank() -> errorMessage = "Please enter a password"
                                 confirmPassword.isBlank() -> errorMessage = "Please confirm your password"
                                 password != confirmPassword -> errorMessage = "Passwords do not match"
-                                password.length < 6 -> errorMessage = "Password must be at least 6 characters"
-                                !email.contains("@") -> errorMessage = "Please enter a valid email"
+                                password.length < 8 -> errorMessage = "Password must be at least 8 characters"
+                                !password.any { it.isUpperCase() } -> errorMessage = "Password must contain at least one uppercase letter"
+                                !password.any { it.isDigit() } -> errorMessage = "Password must contain at least one number"
+                                !password.any { !it.isLetterOrDigit() } -> errorMessage = "Password must contain at least one special character (e.g. !@#\$)"
                                 else -> {
                                     coroutineScope.launch {
                                         isLoading = true
@@ -319,7 +324,13 @@ fun SignUpScreen(
                                             val userId = result.getOrThrow()
                                             onSignUpSuccess(userId, email)
                                         } else {
-                                            errorMessage = result.exceptionOrNull()?.message ?: "Registration failed"
+                                            val exception = result.exceptionOrNull()
+                                            if (exception is EmailNotVerifiedException) {
+                                                // User already registered but didn't verify - redirect to OTP
+                                                onNavigateToOTP(exception.userId, exception.email)
+                                            } else {
+                                                errorMessage = exception?.message ?: "Registration failed"
+                                            }
                                         }
                                     }
                                 }

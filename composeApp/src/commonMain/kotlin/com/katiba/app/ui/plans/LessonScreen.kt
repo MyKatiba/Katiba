@@ -54,34 +54,31 @@ fun LessonScreen(
     
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        if (lesson != null) {
-                            Text(
-                                text = lesson.title,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        } else {
-                            Text("Lesson")
-                        }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    ),
-                    windowInsets = WindowInsets(0.dp)
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+            TopAppBar(
+                title = {
+                    if (lesson != null) {
+                        Text(
+                            text = lesson.title,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    } else {
+                        Text("Lesson")
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(

@@ -17,6 +17,9 @@ interface AuthRepository {
     suspend fun verifyResetOtp(userId: String, otp: String): Result<String> // Returns resetToken
     suspend fun resetPassword(token: String, password: String): Result<String>
 
+    // Lookup – resolves userId for an existing (possibly unverified) account by email
+    suspend fun lookupUserByEmail(email: String): Result<String> // Returns userId
+
     // Google Auth (Firebase)
     suspend fun loginWithGoogle(idToken: String): Result<UserProfile>
     

@@ -42,6 +42,7 @@ fun OTPVerificationScreen(
     userId: String,
     email: String,
     purpose: String, // "email_verification" or "password_reset"
+    autoResend: Boolean = false, // true when redirected from login/signup with unverified email
     authRepository: AuthRepository,
     onVerificationSuccess: (String?) -> Unit, // resetToken for password_reset, null for email_verification
     onBackClick: () -> Unit,
@@ -50,10 +51,34 @@ fun OTPVerificationScreen(
     var otpDigits by remember { mutableStateOf(List(6) { "" }) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var resendCountdown by remember { mutableStateOf(60) }
-    var canResend by remember { mutableStateOf(false) }
+    var infoMessage by remember { mutableStateOf<String?>(null) }
+    var resendCountdown by remember { mutableStateOf(if (autoResend) 0 else 60) }
+    var canResend by remember { mutableStateOf(autoResend) }
     val focusRequesters = remember { List(6) { FocusRequester() } }
     val coroutineScope = rememberCoroutineScope()
+
+    // Auto-resend OTP when redirected from login/signup with unverified email
+    LaunchedEffect(autoResend) {
+        if (autoResend) {
+            if (userId.isBlank()) {
+                errorMessage = "Could not retrieve your account ID. Please go back and try again."
+                return@LaunchedEffect
+            }
+            isLoading = true
+            errorMessage = null
+            infoMessage = null
+            val result = authRepository.resendOtp(userId, purpose)
+            isLoading = false
+            result.onSuccess {
+                resendCountdown = 60
+                canResend = false
+                infoMessage = "A new verification code has been sent to $email"
+            }.onFailure {
+                errorMessage = it.message ?: "Failed to resend verification code"
+                canResend = true
+            }
+        }
+    }
 
     // Countdown timer for resend
     LaunchedEffect(resendCountdown) {
@@ -200,6 +225,18 @@ fun OTPVerificationScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Info message (e.g. "Code sent successfully") shown in green
+            if (infoMessage != null) {
+                Text(
+                    text = infoMessage!!,
+                    color = KatibaColors.KenyaGreen,
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
             // Error message
             if (errorMessage != null) {
                 Text(
@@ -216,16 +253,21 @@ fun OTPVerificationScreen(
             if (canResend) {
                 TextButton(
                     onClick = {
+                        if (userId.isBlank()) {
+                            errorMessage = "Cannot resend: account ID is missing. Please go back and try again."
+                            return@TextButton
+                        }
                         coroutineScope.launch {
                             isLoading = true
                             errorMessage = null
+                            infoMessage = null
                             val result = authRepository.resendOtp(userId, purpose)
                             isLoading = false
 
                             result.onSuccess {
                                 resendCountdown = 60
                                 canResend = false
-                                errorMessage = "Code resent successfully"
+                                infoMessage = "Code resent successfully"
                             }.onFailure {
                                 errorMessage = it.message ?: "Failed to resend code"
                             }

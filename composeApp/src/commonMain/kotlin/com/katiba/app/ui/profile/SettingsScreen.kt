@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.katiba.app.ui.theme.KatibaColors
 
 /**
@@ -47,30 +46,27 @@ fun SettingsScreen(
 ) {
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Settings",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Settings",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    ),
-                    windowInsets = WindowInsets(0.dp)
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         LazyColumn(
@@ -84,21 +80,21 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "Account") {
                     SettingsItem(
-                        emoji = "👤",
+                        icon = Icons.Default.Person,
                         title = "Edit Profile",
                         subtitle = "Name, email, avatar",
                         onClick = onEditProfile
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        emoji = "🔒",
+                        icon = Icons.Default.Lock,
                         title = "Password & Security",
                         subtitle = "Change password, 2FA",
                         onClick = onPasswordSecurity
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        emoji = "📍",
+                        icon = Icons.Default.LocationOn,
                         title = "Update Residence",
                         subtitle = "County, constituency, ward",
                         onClick = onUpdateResidence
@@ -113,14 +109,14 @@ fun SettingsScreen(
                 
                 SettingsSection(title = "Civic Information") {
                     SettingsItem(
-                        emoji = "🇰🇪",
+                        icon = Icons.Default.Info,
                         title = "National ID",
                         subtitle = "Update your national ID number",
                         onClick = onNationalID
                     )
                     HorizontalDivider()
                     SettingsToggleItem(
-                        emoji = "✅",
+                        icon = Icons.Default.CheckCircle,
                         title = "Registered Voter",
                         subtitle = if (isRegisteredVoter) "You are registered to vote" else "Not registered to vote",
                         checked = isRegisteredVoter,
@@ -136,7 +132,7 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "Notifications") {
                     SettingsToggleItem(
-                        emoji = "🔔",
+                        icon = Icons.Default.Notifications,
                         title = "Daily Reminders",
                         subtitle = "Get notified about your daily clause",
                         checked = true,
@@ -144,7 +140,7 @@ fun SettingsScreen(
                     )
                     HorizontalDivider()
                     SettingsToggleItem(
-                        emoji = "🔥",
+                        icon = Icons.Default.Star,
                         title = "Streak Reminders",
                         subtitle = "Don't break your streak!",
                         checked = true,
@@ -152,7 +148,7 @@ fun SettingsScreen(
                     )
                     HorizontalDivider()
                     SettingsToggleItem(
-                        emoji = "🆕",
+                        icon = Icons.Default.Add,
                         title = "New Content",
                         subtitle = "Be notified of new lessons",
                         checked = false,
@@ -165,21 +161,21 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "Display") {
                     SettingsItem(
-                        emoji = "🎨",
+                        icon = Icons.Default.Star,
                         title = "Appearance",
                         subtitle = "Light, Dark, System",
                         onClick = onAppearance
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        emoji = "🔤",
+                        icon = Icons.Default.Edit,
                         title = "Font Size",
                         subtitle = "Adjust text size",
                         onClick = onFontSize
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        emoji = "🌐",
+                        icon = Icons.Default.Place,
                         title = "Language",
                         subtitle = "English",
                         onClick = onLanguage
@@ -191,26 +187,26 @@ fun SettingsScreen(
             item {
                 SettingsSection(title = "About") {
                     SettingsItem(
-                        emoji = "ℹ️",
+                        icon = Icons.Default.Info,
                         title = "About Katiba",
                         subtitle = "Learn about the app",
                         onClick = onAboutKatiba
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        emoji = "📜",
+                        icon = Icons.Default.Info,
                         title = "Terms of Service",
                         subtitle = "Read our terms"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        emoji = "🛡️",
+                        icon = Icons.Default.Lock,
                         title = "Privacy Policy",
                         subtitle = "How we protect your data"
                     )
                     HorizontalDivider()
                     SettingsItem(
-                        emoji = "💬",
+                        icon = Icons.Default.Share,
                         title = "Send Feedback",
                         subtitle = "Help us improve",
                         onClick = onSendFeedback
@@ -342,7 +338,7 @@ private fun SettingsSection(
 
 @Composable
 private fun SettingsItem(
-    emoji: String,
+    icon: ImageVector,
     title: String,
     subtitle: String,
     onClick: () -> Unit = { }
@@ -354,13 +350,7 @@ private fun SettingsItem(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = emoji,
-            fontSize = 28.sp,
-            color = KatibaColors.KenyaGreen,
-            modifier = Modifier.padding(end = 12.dp)
-        )
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
@@ -384,7 +374,7 @@ private fun SettingsItem(
 
 @Composable
 private fun SettingsToggleItem(
-    emoji: String,
+    icon: ImageVector,
     title: String,
     subtitle: String,
     checked: Boolean,
@@ -397,24 +387,18 @@ private fun SettingsToggleItem(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = emoji,
-            fontSize = 28.sp,
-            color = if (enabled) KatibaColors.KenyaGreen else Color.Gray,
-            modifier = Modifier.padding(end = 12.dp)
-        )
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = if (enabled) MaterialTheme.colorScheme.onSurface else Color.Gray
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else Color.Gray.copy(alpha = 0.6f)
+                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
         }
         

@@ -314,12 +314,13 @@ private fun ClauseDetailPage(
     dailyContent: com.katiba.app.data.model.DailyContent
 ) {
     val scrollState = rememberScrollState()
-    var isBookmarked by remember { mutableStateOf(false) }
+    val bookmarkId = remember(dailyContent) { "daily_${dailyContent.date}_${dailyContent.articleNumber}" }
+    var isBookmarked by remember { mutableStateOf(com.katiba.app.data.repository.BookmarkManager.isBookmarked(bookmarkId)) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Kenya shield watermark in bottom right, tilted 30 degrees left
         Image(
@@ -367,7 +368,7 @@ private fun ClauseDetailPage(
                 text = dailyContent.chapterTitle.split(" - ").lastOrNull() ?: dailyContent.chapterTitle,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
             )
             
@@ -375,7 +376,7 @@ private fun ClauseDetailPage(
             Text(
                 text = "Chapter ${dailyContent.chapterNumber}, Article ${dailyContent.articleNumber}",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
@@ -385,7 +386,7 @@ private fun ClauseDetailPage(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                color = Color.White,
+                color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 2.dp
             ) {
                 Row {
@@ -413,7 +414,7 @@ private fun ClauseDetailPage(
                                 .background(KatibaColors.KenyaGreen)
                         )
                     }
-                    
+
                     Column(
                         modifier = Modifier.padding(start = 20.dp, end = 24.dp, top = 24.dp, bottom = 24.dp)
                     ) {
@@ -427,15 +428,27 @@ private fun ClauseDetailPage(
                                 text = "${dailyContent.articleNumber}",
                                 style = MaterialTheme.typography.displayLarge,
                                 fontWeight = FontWeight.Light,
-                                color = Color(0xFFD3D3D3) // Light grey
+                                color = MaterialTheme.colorScheme.outlineVariant
                             )
                             Icon(
                                 imageVector = if (isBookmarked) BookmarkFilledIcon else BookmarkBorderIcon,
                                 contentDescription = "Bookmark",
-                                tint = if (isBookmarked) Color(0xFFFFD700) else Color(0xFFC0C0C0),
+                                tint = if (isBookmarked) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier
                                     .size(32.dp)
-                                    .clickable { isBookmarked = !isBookmarked }
+                                    .clickable {
+                                        val entry = com.katiba.app.data.repository.BookmarkManager.BookmarkEntry(
+                                            id = bookmarkId,
+                                            articleNumber = dailyContent.articleNumber,
+                                            clauseNumber = dailyContent.clause.number,
+                                            clauseText = dailyContent.clause.text,
+                                            chapterNumber = dailyContent.chapterNumber,
+                                            chapterTitle = dailyContent.chapterTitle,
+                                            articleTitle = dailyContent.articleTitle,
+                                            date = dailyContent.date
+                                        )
+                                        isBookmarked = com.katiba.app.data.repository.BookmarkManager.toggleBookmark(entry)
+                                    }
                             )
                         }
 
@@ -445,7 +458,7 @@ private fun ClauseDetailPage(
                         Text(
                             text = "\"${dailyContent.clause.text}\"",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             lineHeight = 28.sp,
                             textAlign = TextAlign.Start
                         )
@@ -457,7 +470,7 @@ private fun ClauseDetailPage(
                                 Text(
                                     text = "(${subClause.label}) ${subClause.text}",
                                     style = MaterialTheme.typography.bodyLarge,
-                                    color = Color.Black,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     lineHeight = 28.sp,
                                     textAlign = TextAlign.Start,
                                     modifier = Modifier.padding(vertical = 4.dp)
@@ -474,33 +487,18 @@ private fun ClauseDetailPage(
                                 .height(4.dp),
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                                    .background(KatibaColors.KenyaBlack)
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                                    .background(KatibaColors.KenyaRed)
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                                    .background(KatibaColors.KenyaGreen)
-                            )
+                            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(KatibaColors.KenyaBlack))
+                            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(KatibaColors.KenyaRed))
+                            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(KatibaColors.KenyaGreen))
                         }
-                        
+
                         Spacer(modifier = Modifier.height(12.dp))
 
                         // Constitution source
                         Text(
                             text = "Constitution of Kenya, 2010",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -526,7 +524,7 @@ private fun ClauseDetailPage(
                         text = "Understanding this clause",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
 
@@ -536,7 +534,7 @@ private fun ClauseDetailPage(
                 Text(
                     text = dailyContent.aiDescription,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Black.copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f),
                     textAlign = TextAlign.Start,
                     lineHeight = 24.sp
                 )

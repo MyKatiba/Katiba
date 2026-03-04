@@ -1,5 +1,8 @@
 package com.katiba.app.ui.profile
 
+ import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -9,12 +12,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.katiba.app.ui.theme.KatibaColors
 
 /**
@@ -39,30 +45,27 @@ fun EditProfileScreen(
     
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Edit Profile",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Edit Profile",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    ),
-                    windowInsets = WindowInsets(0.dp)
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(
@@ -169,30 +172,27 @@ fun PasswordSecurityScreen(
     
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Password & Security",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Password & Security",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    ),
-                    windowInsets = WindowInsets(0.dp)
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(
@@ -315,30 +315,27 @@ fun UpdateResidenceScreen(
     
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Update Residence",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Update Residence",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    ),
-                    windowInsets = WindowInsets(0.dp)
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(
@@ -414,29 +411,27 @@ fun NationalIDScreen(
     
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "National ID",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "National ID",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(
@@ -501,29 +496,27 @@ fun AppearanceScreen(
     
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Appearance",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Appearance",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(
@@ -531,44 +524,133 @@ fun AppearanceScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             Text(
                 text = "Theme",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
             )
-            
-            listOf("Light", "Dark", "System").forEach { theme ->
-                Surface(
-                    onClick = { 
-                        selectedTheme = theme
-                        onThemeChange(theme)
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (selectedTheme == theme) KatibaColors.KenyaGreen.copy(alpha = 0.1f) else Color.Transparent
+
+            // Slider-style segmented toggle
+            ThemeToggle(
+                selectedTheme = selectedTheme,
+                onThemeSelected = { theme ->
+                    selectedTheme = theme
+                    onThemeChange(theme)
+                }
+            )
+        }
+    }
+}
+
+/**
+ * Custom slider-style theme toggle with animated selection indicator.
+ * Pill-shaped track with two segments: Light | Dark, supporting tap and swipe.
+ */
+@Composable
+private fun ThemeToggle(
+    selectedTheme: String,
+    onThemeSelected: (String) -> Unit
+) {
+    val options = listOf("Light", "Dark")
+    val selectedIndex = if (selectedTheme == "Dark") 1 else 0
+
+    // Animated offset fraction (0f or 1f) for the sliding indicator
+    val targetFraction = selectedIndex.toFloat()
+    val animatedFraction by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = targetFraction,
+        animationSpec = androidx.compose.animation.core.spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioMediumBouncy,
+            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow
+        ),
+        label = "themeFraction"
+    )
+
+    // Track background — dark navy pill
+    val trackColor = Color(0xFF1A1A2E)
+    // Selected pill gradient — greenish
+    val pillGradient = androidx.compose.ui.graphics.Brush.horizontalGradient(
+        colors = listOf(Color(0xFF1B7A3D), Color(0xFF2ECC71))
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .clip(RoundedCornerShape(26.dp))
+            .background(trackColor)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures { _, dragAmount ->
+                    if (dragAmount > 20f) {
+                        onThemeSelected("Dark")
+                    } else if (dragAmount < -20f) {
+                        onThemeSelected("Light")
+                    }
+                }
+            }
+    ) {
+        // Sliding pill indicator
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val segmentWidth = maxWidth / options.size
+            val pillPadding = 4.dp
+            val pillWidth = segmentWidth - pillPadding * 2
+            val totalTravel = maxWidth - segmentWidth
+            val offsetX = totalTravel * animatedFraction + pillPadding
+
+            Box(
+                modifier = Modifier
+                    .offset(x = offsetX)
+                    .width(pillWidth + pillPadding)
+                    .fillMaxHeight()
+                    .padding(vertical = pillPadding)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(pillGradient)
+            )
+        }
+
+        // Labels row
+        Row(modifier = Modifier.fillMaxSize()) {
+            options.forEachIndexed { index, label ->
+                val isSelected = index == selectedIndex
+
+                // Animated text color
+                val textColor by androidx.compose.animation.animateColorAsState(
+                    targetValue = if (isSelected) Color.White else Color.White.copy(alpha = 0.5f),
+                    animationSpec = androidx.compose.animation.core.tween(250),
+                    label = "textColor$index"
+                )
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable(
+                            interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            onThemeSelected(label)
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
+                        // Icon for each option
+                        when (label) {
+                            "Light" -> Text("☀\uFE0F", fontSize = 16.sp)
+                            "Dark" -> Text("🌙", fontSize = 16.sp)
+                        }
                         Text(
-                            text = theme,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        RadioButton(
-                            selected = selectedTheme == theme,
-                            onClick = { 
-                                selectedTheme = theme
-                                onThemeChange(theme)
-                            },
-                            colors = RadioButtonDefaults.colors(
-                                selectedColor = KatibaColors.KenyaGreen
-                            )
+                            text = label,
+                            color = textColor,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 14.sp
                         )
                     }
                 }
@@ -591,29 +673,27 @@ fun FontSizeScreen(
     
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Font Size",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Font Size",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(
@@ -711,29 +791,27 @@ fun LanguageScreen(
     
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Language",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Language",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(
@@ -800,29 +878,27 @@ fun AboutKatibaScreen(
 ) {
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "About Katiba",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "About Katiba",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(
@@ -843,7 +919,7 @@ fun AboutKatibaScreen(
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
-                        text = "🇰🇪",
+                        text = "ðŸ‡°ðŸ‡ª",
                         style = MaterialTheme.typography.displayLarge
                     )
                 }
@@ -886,11 +962,11 @@ fun AboutKatibaScreen(
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
-                    Text("• Full Constitution text with search", style = MaterialTheme.typography.bodySmall)
-                    Text("• Daily clause of the day", style = MaterialTheme.typography.bodySmall)
-                    Text("• Interactive learning lessons", style = MaterialTheme.typography.bodySmall)
-                    Text("• Mzalendo AI assistant", style = MaterialTheme.typography.bodySmall)
-                    Text("• Progress tracking & achievements", style = MaterialTheme.typography.bodySmall)
+                    Text("â€¢ Full Constitution text with search", style = MaterialTheme.typography.bodySmall)
+                    Text("â€¢ Daily clause of the day", style = MaterialTheme.typography.bodySmall)
+                    Text("â€¢ Interactive learning lessons", style = MaterialTheme.typography.bodySmall)
+                    Text("â€¢ Mzalendo AI assistant", style = MaterialTheme.typography.bodySmall)
+                    Text("â€¢ Progress tracking & achievements", style = MaterialTheme.typography.bodySmall)
                 }
             }
         }
@@ -910,29 +986,27 @@ fun SendFeedbackScreen(
     
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Send Feedback",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Send Feedback",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
                     )
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(

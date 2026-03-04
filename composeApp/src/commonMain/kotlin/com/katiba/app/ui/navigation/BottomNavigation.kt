@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,7 +60,7 @@ fun KatibaBottomNavigation(
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 8.dp,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
@@ -109,7 +110,7 @@ private fun BottomNavItem(
     val contentColor = if (isSelected) {
         Color.White
     } else {
-        Color(0xFF9CA3AF) // Gray for unselected
+        MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Box(

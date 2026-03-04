@@ -1,24 +1,37 @@
 package com.katiba.app.ui.constitution
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -58,12 +71,31 @@ fun ReadingScreen(
     }
     
     val scrollState = rememberScrollState()
-    
+    var isSearchActive by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+
+    // Request focus when search opens
+    LaunchedEffect(isSearchActive) {
+        if (isSearchActive) {
+            kotlinx.coroutines.delay(100)
+            focusRequester.requestFocus()
+        }
+    }
+
     Scaffold(
         topBar = {
             ReadingTopBar(
                 onMenuClick = onBackClick,
-                onSearchClick = { /* Search */ }
+                isSearchActive = isSearchActive,
+                searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
+                onSearchClick = { isSearchActive = true },
+                onCloseSearch = {
+                    searchQuery = ""
+                    isSearchActive = false
+                },
+                focusRequester = focusRequester
             )
         },
         bottomBar = {
@@ -120,7 +152,7 @@ fun ReadingScreen(
                     
                     // Clauses
                     article.clauses.forEach { clause ->
-                        ClauseContent(clause = clause)
+                        ClauseContent(clause = clause, searchQuery = searchQuery)
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                     
@@ -146,63 +178,143 @@ fun ReadingScreen(
 @Composable
 private fun ReadingTopBar(
     onMenuClick: () -> Unit,
-    onSearchClick: () -> Unit
+    isSearchActive: Boolean,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onSearchClick: () -> Unit,
+    onCloseSearch: () -> Unit,
+    focusRequester: FocusRequester
 ) {
-    Column {
-        TopAppBar(
-            title = { },
-            navigationIcon = {
-                IconButton(
-                    onClick = onMenuClick,
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "Menu",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            },
-            actions = {
-                IconButton(
-                    onClick = { /* Audio */ },
-                    modifier = Modifier.size(40.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Listen",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                IconButton(
-                    onClick = onSearchClick,
-                    modifier = Modifier.size(40.dp)
+    Surface(
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp)
+        ) {
+            // Normal header
+            AnimatedVisibility(
+                visible = !isSearchActive,
+                enter = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)),
+                exit = fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMedium))
+            ) {
+                TopAppBar(
+                    title = { },
+                    navigationIcon = {
+                        IconButton(
+                            onClick = onMenuClick,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Menu",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = onSearchClick,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "2010",
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    windowInsets = WindowInsets(0.dp)
+                )
+            }
+
+            // Search bar - expands from left like a filling progress bar
+            AnimatedVisibility(
+                visible = isSearchActive,
+                enter = fadeIn(animationSpec = tween(200)) + expandHorizontally(
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    ),
+                    expandFrom = Alignment.Start
+                ),
+                exit = fadeOut(animationSpec = tween(150)) + shrinkHorizontally(
+                    animationSpec = tween(
+                        durationMillis = 250,
+                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                    ),
+                    shrinkTowards = Alignment.Start
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
-                }
-                // Version/Translation selector placeholder
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = "2010",
-                        style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    BasicTextField(
+                        value = searchQuery,
+                        onValueChange = onSearchQueryChange,
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(focusRequester),
+                        textStyle = TextStyle(
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                        ),
+                        singleLine = true,
+                        cursorBrush = SolidColor(KatibaColors.KenyaGreen),
+                        decorationBox = { innerTextField ->
+                            if (searchQuery.isEmpty()) {
+                                Text(
+                                    text = "Search in article...",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            innerTextField()
+                        }
                     )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = onCloseSearch,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close search",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(4.dp))
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.background
-            ),
-            windowInsets = WindowInsets(0.dp)
-        )
-        HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
+            }
+        }
     }
 }
 
@@ -232,7 +344,7 @@ private fun ArticleHeader(
 }
 
 @Composable
-private fun ClauseContent(clause: Clause) {
+private fun ClauseContent(clause: Clause, searchQuery: String = "") {
     val annotatedText = buildAnnotatedString {
         // Clause number as superscript-style
         if (clause.number.isNotEmpty()) {
@@ -246,13 +358,29 @@ private fun ClauseContent(clause: Clause) {
             }
         }
         
-        // Clause text
-        withStyle(
-            style = SpanStyle(
-                color = Color.Unspecified
-            )
-        ) {
-            append(clause.text)
+        // Clause text with highlighting
+        val text = clause.text
+        if (searchQuery.isNotBlank()) {
+            val lowerText = text.lowercase()
+            val lowerQuery = searchQuery.lowercase()
+            var lastIndex = 0
+            var startIndex = lowerText.indexOf(lowerQuery)
+            while (startIndex >= 0) {
+                // Text before match
+                append(text.substring(lastIndex, startIndex))
+                // Highlighted match
+                withStyle(SpanStyle(background = Color(0xFFFFEB3B), color = Color.Black, fontWeight = FontWeight.Bold)) {
+                    append(text.substring(startIndex, startIndex + searchQuery.length))
+                }
+                lastIndex = startIndex + searchQuery.length
+                startIndex = lowerText.indexOf(lowerQuery, lastIndex)
+            }
+            // Remaining text
+            append(text.substring(lastIndex))
+        } else {
+            withStyle(style = SpanStyle(color = Color.Unspecified)) {
+                append(text)
+            }
         }
     }
     
@@ -320,91 +448,62 @@ private fun ReadingBottomBar(
     hasPrevious: Boolean,
     hasNext: Boolean
 ) {
-    Column {
-        // Beadwork divider
-        Box(
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 8.dp
+    ) {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(3.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            KatibaColors.KenyaBlack,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaWhite,
-                            KatibaColors.KenyaGreen,
-                            KatibaColors.KenyaRed,
-                            KatibaColors.KenyaBlack
-                        )
-                    )
-                )
-        )
-        
-        Surface(
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 8.dp
+                .padding(horizontal = 8.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
+            // Previous button - left edge, black circular
+            IconButton(
+                onClick = onPreviousClick,
+                enabled = hasPrevious,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (hasPrevious) Color.Black
+                        else MaterialTheme.colorScheme.surfaceVariant
+                    )
             ) {
-                // Audio button
-                IconButton(onClick = { /* Play audio */ }) {
-                    Icon(
-                        imageVector = Icons.Default.PlayArrow,
-                        contentDescription = "Play",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = "Previous",
+                    tint = if (hasPrevious) Color.White else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            // Center - Article label
+            Text(
+                text = "Article ${article.number}",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium
+            )
+
+            // Next button - right edge, black circular
+            IconButton(
+                onClick = onNextClick,
+                enabled = hasNext,
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (hasNext) Color.Black
+                        else MaterialTheme.colorScheme.surfaceVariant
                     )
-                }
-                
-                // Navigation controls
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    IconButton(
-                        onClick = onPreviousClick,
-                        enabled = hasPrevious
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "Previous",
-                            tint = if (hasPrevious) {
-                                MaterialTheme.colorScheme.onSurface
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                            }
-                        )
-                    }
-                    
-                    Text(
-                        text = "Article ${article.number}",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Medium
-                    )
-                    
-                    IconButton(
-                        onClick = onNextClick,
-                        enabled = hasNext
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = "Next",
-                            tint = if (hasNext) {
-                                MaterialTheme.colorScheme.onSurface
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                            }
-                        )
-                    }
-                }
-                
-                // Placeholder for balance
-                Spacer(modifier = Modifier.width(48.dp))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = "Next",
+                    tint = if (hasNext) Color.White else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }

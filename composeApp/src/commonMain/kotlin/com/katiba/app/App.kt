@@ -1,9 +1,11 @@
 package com.katiba.app
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -58,6 +60,15 @@ fun App(
     val authRepository = remember { AuthRepositoryImpl() }
     val coroutineScope = rememberCoroutineScope()
 
+    // Dark mode: read persisted preference and resolve to a boolean
+    var themePreference by remember { mutableStateOf(AppPreferences.themePreference) }
+    val systemDark = isSystemInDarkTheme()
+    val darkTheme = when (themePreference) {
+        "Dark" -> true
+        "Light" -> false
+        else -> systemDark // "System" follows device setting
+    }
+
     // Load constitution data on first composition
     var isConstitutionLoaded by remember { mutableStateOf(ConstitutionRepository.isLoaded()) }
 
@@ -78,7 +89,7 @@ fun App(
         }
     }
 
-    KatibaTheme {
+    KatibaTheme(darkTheme = darkTheme) {
         if (!isConstitutionLoaded) {
             // Show loading indicator while constitution data loads
             Box(
@@ -91,7 +102,11 @@ fun App(
             AppContent(
                 authRepository = authRepository,
                 googleSignInService = googleSignInService,
-                coroutineScope = coroutineScope
+                coroutineScope = coroutineScope,
+                onThemeChange = { newTheme ->
+                    AppPreferences.themePreference = newTheme
+                    themePreference = newTheme
+                }
             )
         }
     }
@@ -101,17 +116,23 @@ fun App(
 private fun AppContent(
     authRepository: AuthRepositoryImpl,
     googleSignInService: GoogleSignInService?,
-    coroutineScope: kotlinx.coroutines.CoroutineScope
+    coroutineScope: kotlinx.coroutines.CoroutineScope,
+    onThemeChange: (String) -> Unit = {}
 ) {
-        // Determine initial route based on onboarding completion
-        val initialRoute: NavKey = if (AppPreferences.hasCompletedOnboarding) {
-            LoginRoute // Skip onboarding, go to login
-        } else {
+        // Determine initial route based on onboarding + login state
+        val initialRoute: NavKey = if (!AppPreferences.hasCompletedOnboarding) {
             OnboardingRoute // First time user, show onboarding
+        } else if (AppPreferences.isLoggedIn) {
+            HomeRoute // Returning user with a persisted session — skip login
+        } else {
+            LoginRoute // Onboarding done but not logged in — show login
         }
         
         // Navigation 3 Style: You own the backstack as a mutable list
         val backStack = rememberNavBackStack(initialRoute)
+
+        // Track whether the clause-of-the-day is expanded (fullscreen)
+        var isClauseExpanded by remember { mutableStateOf(false) }
 
         // Helper to get current route from backstack
         val currentKey = backStack.lastOrNull()
@@ -159,8 +180,8 @@ private fun AppContent(
         
         // Determine if bottom bar should be shown
         // Only show bottom bar when user is authenticated
-        val showBottomBar = remember(currentKey, currentUser) {
-            currentUser != null && when (currentKey) {
+        val showBottomBar = remember(currentKey, currentUser, isClauseExpanded) {
+            currentUser != null && !isClauseExpanded && when (currentKey) {
                 is HomeRoute -> true
                 is ConstitutionRoute -> true
                 is PlansRoute -> true
@@ -224,7 +245,7 @@ private fun AppContent(
 
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
                 if (showBottomBar) {
                     KatibaBottomNavigation(
@@ -280,6 +301,10 @@ private fun AppContent(
                             },
                             onNavigateToForgotPassword = {
                                 backStack.add(ForgotPasswordRoute)
+                            },
+                            onNavigateToOTP = { userId, email ->
+                                // Redirect to OTP verification for unverified email
+                                backStack.add(OTPVerificationRoute(userId, email, "email_verification", true))
                             }
                         )
                     }
@@ -310,6 +335,10 @@ private fun AppContent(
                             },
                             onNavigateToLogin = {
                                 backStack.removeLast()
+                            },
+                            onNavigateToOTP = { userId, email ->
+                                // Redirect to OTP verification for unverified email (re-registration attempt)
+                                backStack.add(OTPVerificationRoute(userId, email, "email_verification", true))
                             }
                         )
                     }
@@ -319,6 +348,7 @@ private fun AppContent(
                             userId = key.userId,
                             email = key.email,
                             purpose = key.purpose,
+                            autoResend = key.autoResend,
                             authRepository = authRepository,
                             onVerificationSuccess = { resetToken ->
                                 if (key.purpose == "email_verification") {
@@ -389,6 +419,9 @@ private fun AppContent(
                             },
                             onResumeLesson = { lessonId ->
                                 backStack.add(LessonRoute(lessonId))
+                            },
+                            onClauseExpandedChange = { expanded ->
+                                isClauseExpanded = expanded
                             }
                         )
                     }
@@ -572,7 +605,8 @@ private fun AppContent(
                     entry<AppearanceRoute> {
                         AppearanceScreen(
                             onBackClick = { backStack.removeLast() },
-                            onThemeChange = { _ -> }
+                            onThemeChange = onThemeChange,
+                            currentTheme = AppPreferences.themePreference
                         )
                     }
 

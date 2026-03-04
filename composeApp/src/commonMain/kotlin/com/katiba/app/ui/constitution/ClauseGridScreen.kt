@@ -42,58 +42,45 @@ fun ClauseGridScreen(
     
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Column(
-                            modifier = Modifier.padding(vertical = 2.dp)
-                        ) {
+            TopAppBar(
+                title = {
+                    Column(
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = if (chapter != null) "Chapter ${chapter.number} - ${chapter.title}" else "Chapter $chapterNumber",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2
+                        )
+                        if (chapter != null) {
                             Text(
-                                text = if (chapter != null) "Chapter ${chapter.number} - ${chapter.title}" else "Chapter $chapterNumber",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 2
-                            )
-                            if (chapter != null) {
-                                Text(
-                                    text = "${chapter.articles.size} articles",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = onBackClick,
-                            modifier = Modifier.size(44.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                modifier = Modifier.size(22.dp)
+                                text = "${chapter.articles.size} articles",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    },
-                    actions = {
-                        IconButton(
-                            onClick = { /* Search */ },
-                            modifier = Modifier.size(44.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search",
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    ),
-                    windowInsets = WindowInsets(0.dp)
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
+                    }
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.size(44.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                },
+                actions = {
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                windowInsets = WindowInsets(0.dp)
+            )
         }
     ) { paddingValues ->
         Column(
@@ -101,28 +88,8 @@ fun ClauseGridScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Beadwork accent line
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                KatibaColors.KenyaBlack,
-                                KatibaColors.KenyaRed,
-                                KatibaColors.KenyaGreen,
-                                KatibaColors.KenyaWhite,
-                                KatibaColors.KenyaGreen,
-                                KatibaColors.KenyaRed,
-                                KatibaColors.KenyaBlack
-                            )
-                        )
-                    )
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
+            Spacer(modifier = Modifier.height(8.dp))
+
             // Article grid
             if (chapter != null) {
                 ArticleGrid(

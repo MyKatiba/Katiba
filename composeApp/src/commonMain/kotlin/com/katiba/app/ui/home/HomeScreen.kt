@@ -37,6 +37,7 @@ import com.katiba.app.data.model.DailyContent
 import com.katiba.app.data.model.Lesson
 import com.katiba.app.data.repository.SampleDataRepository
 import com.katiba.app.data.repository.StreakManager
+import com.katiba.app.data.repository.BookmarkManager
 import com.katiba.app.ui.theme.KatibaColors
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -90,6 +91,7 @@ fun HomeScreen(
     onNotificationsClick: () -> Unit,
     onMzalendoClick: () -> Unit,
     onResumeLesson: (String) -> Unit,
+    onClauseExpandedChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val dailyContent = remember { SampleDataRepository.getDailyContent() }
@@ -111,7 +113,12 @@ fun HomeScreen(
     }
     
     var isClauseExpanded by remember { mutableStateOf(false) }
-    
+
+    // Notify parent whenever clause expanded state changes
+    LaunchedEffect(isClauseExpanded) {
+        onClauseExpandedChange(isClauseExpanded)
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = modifier
@@ -243,7 +250,7 @@ private fun HomeTopBar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(top = 4.dp)
     ) {
         Row(
@@ -264,7 +271,7 @@ private fun HomeTopBar(
                         text = "Today",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = if (selectedTab == HomeTab.TODAY) Color.Black else Color.Gray
+                        color = if (selectedTab == HomeTab.TODAY) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (selectedTab == HomeTab.TODAY) {
                         Box(
@@ -312,14 +319,14 @@ private fun HomeTopBar(
                     Icon(
                         imageVector = if (streakCount > 0) BoltIconFilled else BoltIconOutline,
                         contentDescription = "Streak",
-                        tint = if (streakCount > 0) Color(0xFFFFD700) else Color.Gray,
+                        tint = if (streakCount > 0) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = "$streakCount",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        color = if (streakCount > 0) Color.Black else Color.Gray
+                        color = if (streakCount > 0) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -327,7 +334,7 @@ private fun HomeTopBar(
                     Icon(
                         imageVector = Icons.Default.Notifications,
                         contentDescription = "Notifications",
-                        tint = Color.Black
+                        tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
             }
@@ -351,7 +358,7 @@ fun StreakBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
@@ -391,34 +398,34 @@ fun StreakBottomSheet(
                             imageVector = if (currentStreak > 0) BoltIconFilled else BoltIconOutline,
                             contentDescription = null,
                             modifier = Modifier.size(32.dp),
-                            tint = if (currentStreak > 0) Color(0xFFFFD700) else Color.Gray
+                            tint = if (currentStreak > 0) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "$currentStreak",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (currentStreak > 0) Color.Black else Color.Gray
+                            color = if (currentStreak > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Text("App Streak", color = Color.Gray)
+                    Text("App Streak", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = if (bestStreak > 0) BoltIconFilled else BoltIconOutline,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = if (bestStreak > 0) Color(0xFFFFD700) else Color.Gray
+                            tint = if (bestStreak > 0) Color(0xFFFFD700) else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "$bestStreak Best",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (bestStreak > 0) Color.Black else Color.Gray
+                            color = if (bestStreak > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                Box(modifier = Modifier.width(1.dp).height(80.dp).background(Color.LightGray))
+                Box(modifier = Modifier.width(1.dp).height(80.dp).background(MaterialTheme.colorScheme.outlineVariant))
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -426,29 +433,29 @@ fun StreakBottomSheet(
                             imageVector = Icons.Default.Favorite,
                             contentDescription = null,
                             modifier = Modifier.size(32.dp),
-                            tint = if (dailyRefreshStreak > 0) KatibaColors.KenyaGreen else Color.Gray
+                            tint = if (dailyRefreshStreak > 0) KatibaColors.KenyaGreen else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "$dailyRefreshStreak",
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (dailyRefreshStreak > 0) Color.Black else Color.Gray
+                            color = if (dailyRefreshStreak > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    Text("Daily Refresh Streak", color = Color.Gray, fontSize = 12.sp, textAlign = TextAlign.Center)
+                    Text("Daily Refresh Streak", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp, textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Favorite,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = if (bestDailyRefreshStreak > 0) KatibaColors.KenyaGreen else Color.Gray
+                            tint = if (bestDailyRefreshStreak > 0) KatibaColors.KenyaGreen else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "$bestDailyRefreshStreak Best",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if (bestDailyRefreshStreak > 0) Color.Black else Color.Gray
+                            color = if (bestDailyRefreshStreak > 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -468,11 +475,11 @@ fun StreakBottomSheet(
                 )
                 Text(
                     text = "$currentStreak ${if (currentStreak == 1) "day" else "days"} in the Katiba App",
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
                 Text("Start your streak today!", fontWeight = FontWeight.Bold)
-                Text("Open the app daily to build your habit", color = Color.Gray)
+                Text("Open the app daily to build your habit", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -505,13 +512,12 @@ fun StreakBottomSheet(
                             modifier = Modifier
                                 .size(32.dp)
                                 .let { 
-                                    if (isToday) it.border(1.dp, Color.Black, CircleShape)
+                                    if (isToday) it.border(1.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
                                     else it
                                 },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(date)
-                            // Red dot for app streak
                             if (streakData.hasAppStreak) {
                                 Box(
                                     modifier = Modifier
@@ -520,13 +526,12 @@ fun StreakBottomSheet(
                                         .background(KatibaColors.KenyaRed, CircleShape)
                                 )
                             }
-                            // Grey drop marker for daily refresh (bottom left)
                             if (streakData.hasDailyRefresh) {
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.BottomStart)
                                         .size(5.dp)
-                                        .background(Color.Gray, CircleShape)
+                                        .background(MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
                                 )
                             }
                         }
@@ -546,7 +551,8 @@ private fun ClauseOfTheDayCard(
 ) {
     val gradientColors = remember { getGradientForDay() }
     var isLiked by remember { mutableStateOf(false) }
-    var isBookmarked by remember { mutableStateOf(false) }
+    val bookmarkId = "daily_${dailyContent.date}_${dailyContent.articleNumber}"
+    var isBookmarked by remember(bookmarkId) { mutableStateOf(BookmarkManager.isBookmarked(bookmarkId)) }
 
     Box(
         modifier = Modifier
@@ -667,7 +673,19 @@ private fun ClauseOfTheDayCard(
                 isBookmarked = isBookmarked,
                 onShareClick = { /* TODO: Implement share functionality */ },
                 onLikeClick = { isLiked = !isLiked },
-                onBookmarkClick = { isBookmarked = !isBookmarked }
+                onBookmarkClick = {
+                    val entry = BookmarkManager.BookmarkEntry(
+                        id = bookmarkId,
+                        articleNumber = dailyContent.articleNumber,
+                        clauseNumber = dailyContent.clause.number,
+                        clauseText = dailyContent.clause.text,
+                        chapterNumber = dailyContent.chapterNumber,
+                        chapterTitle = dailyContent.chapterTitle,
+                        articleTitle = dailyContent.articleTitle,
+                        date = dailyContent.date
+                    )
+                    isBookmarked = BookmarkManager.toggleBookmark(entry)
+                }
             )
         }
     }
@@ -689,7 +707,7 @@ private fun ClauseBottomSection(
     ) {
         // Citation
         Text(
-            text = "Article ${dailyContent.articleNumber}, Section 1 • ${dailyContent.chapterTitle}",
+            text = "Chapter ${dailyContent.chapterNumber} • ${dailyContent.chapterTitle}",
             style = MaterialTheme.typography.bodyMedium,
             color = Color.White.copy(alpha = 0.8f)
         )
@@ -769,7 +787,7 @@ private fun AIDescriptionCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -786,7 +804,7 @@ private fun AIDescriptionCard(
             ) {
                 // Badge with water drop icon
                 Surface(
-                    color = Color(0xFFE8E8E8),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Row(
@@ -797,13 +815,13 @@ private fun AIDescriptionCard(
                         Icon(
                             imageVector = WaterDropIcon,
                             contentDescription = null,
-                            tint = Color.Gray,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
                             text = "0",
                             style = MaterialTheme.typography.labelMedium,
-                            color = Color.Gray
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -812,7 +830,7 @@ private fun AIDescriptionCard(
                 Text(
                     text = "Deep Dive",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 // Main title
@@ -820,7 +838,7 @@ private fun AIDescriptionCard(
                     text = "What This Clause Means",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 // Duration with play icon
@@ -831,12 +849,12 @@ private fun AIDescriptionCard(
                     Text(
                         text = "▶",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "2-5 min",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -878,7 +896,7 @@ private fun TipsCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -897,7 +915,7 @@ private fun TipsCard(
                 Text(
                     text = "Application",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 // Main title
@@ -905,7 +923,7 @@ private fun TipsCard(
                     text = "Apply This in Your Life",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 // Duration with play icon
@@ -916,12 +934,12 @@ private fun TipsCard(
                     Text(
                         text = "▶",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "4-6 min",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -982,7 +1000,7 @@ private fun LearningProgressCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box(
@@ -1159,7 +1177,8 @@ private fun ExpandedClauseView(
     var showMenu by remember { mutableStateOf(false) }
     val gradientColors = remember { getGradientForDay() }
     var isLiked by remember { mutableStateOf(false) }
-    var isBookmarked by remember { mutableStateOf(false) }
+    val bookmarkId = "daily_${dailyContent.date}_${dailyContent.articleNumber}"
+    var isBookmarked by remember(bookmarkId) { mutableStateOf(BookmarkManager.isBookmarked(bookmarkId)) }
 
     Box(
         modifier = Modifier
@@ -1236,7 +1255,7 @@ private fun ExpandedClauseView(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Article ${dailyContent.articleNumber}, Clause ${dailyContent.clause.number}",
+                    text = "Chapter ${dailyContent.chapterNumber} - ${dailyContent.chapterTitle}",
                     style = MaterialTheme.typography.headlineSmall,
                     color = Color.White,
                     fontWeight = FontWeight.Bold
@@ -1260,7 +1279,19 @@ private fun ExpandedClauseView(
                 isBookmarked = isBookmarked,
                 onShareClick = { /* TODO: Implement share functionality */ },
                 onLikeClick = { isLiked = !isLiked },
-                onBookmarkClick = { isBookmarked = !isBookmarked },
+                onBookmarkClick = {
+                    val entry = BookmarkManager.BookmarkEntry(
+                        id = bookmarkId,
+                        articleNumber = dailyContent.articleNumber,
+                        clauseNumber = dailyContent.clause.number,
+                        clauseText = dailyContent.clause.text,
+                        chapterNumber = dailyContent.chapterNumber,
+                        chapterTitle = dailyContent.chapterTitle,
+                        articleTitle = dailyContent.articleTitle,
+                        date = dailyContent.date
+                    )
+                    isBookmarked = BookmarkManager.toggleBookmark(entry)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 24.dp, end = 24.dp, bottom = 64.dp)

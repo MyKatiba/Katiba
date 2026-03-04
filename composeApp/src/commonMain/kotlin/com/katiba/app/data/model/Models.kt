@@ -239,6 +239,24 @@ data class ResendOtpRequest(
 )
 
 /**
+ * Lookup request – resolves a userId for an existing (possibly unverified) account by email.
+ * Used with POST /api/auth/lookup
+ */
+@Serializable
+data class LookupRequest(
+    val email: String
+)
+
+/**
+ * Lookup response – backend also sends the OTP email immediately upon a successful lookup.
+ */
+@Serializable
+data class LookupResponse(
+    val userId: String,
+    val message: String = ""
+)
+
+/**
  * Forgot password request
  */
 @Serializable
@@ -319,7 +337,9 @@ data class UpdateProfileRequest(
 data class ApiErrorResponse(
     val error: String? = null,
     val message: String? = null,
-    val success: Boolean? = null
+    val success: Boolean? = null,
+    val userId: String? = null,
+    val code: String? = null   // structured error code, e.g. "EMAIL_EXISTS", "EMAIL_NOT_VERIFIED"
 ) {
     /**
      * Get the error message from whichever field is available

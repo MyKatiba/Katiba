@@ -221,7 +221,7 @@ fun MzalendoScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
             },
-            containerColor = Color.White, // Consistent white background
+            containerColor = MaterialTheme.colorScheme.background,
             modifier = modifier.fillMaxSize()
         ) { paddingValues ->
             if (showWelcomeScreen && messages.isEmpty()) {
@@ -342,7 +342,7 @@ private fun ChatHistoryDrawer(
     }
 
     ModalDrawerSheet(
-        drawerContainerColor = Color.White
+        drawerContainerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
@@ -358,7 +358,7 @@ private fun ChatHistoryDrawer(
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp, vertical = 8.dp)
                     .shadow(2.dp, RoundedCornerShape(12.dp)),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
@@ -372,13 +372,13 @@ private fun ChatHistoryDrawer(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFFF3F4F6)),
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = null,
-                            tint = Color.Gray,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -386,12 +386,12 @@ private fun ChatHistoryDrawer(
                     Text(
                         text = "New chat",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
 
-            HorizontalDivider(color = Color(0xFFF3F4F6))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
             // Chat sessions list grouped by time
             if (sessions.isEmpty()) {
@@ -404,7 +404,7 @@ private fun ChatHistoryDrawer(
                     Text(
                         text = "No previous chats",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             } else {
@@ -418,10 +418,10 @@ private fun ChatHistoryDrawer(
                         if (sessionsInGroup.isNotEmpty()) {
                             item {
                                 Text(
-                                    text = timeGroup,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.Gray,
-                                    fontWeight = FontWeight.Medium,
+                                text = timeGroup,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium,
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                                 )
                             }
@@ -458,7 +458,7 @@ private fun ChatHistoryItem(
             .padding(horizontal = 12.dp, vertical = 4.dp)
             .shadow(1.dp, RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(
-            containerColor = if (isActive) Color(0xFFF0FDF4) else Color.White
+            containerColor = if (isActive) KatibaColors.KenyaGreen.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -472,7 +472,7 @@ private fun ChatHistoryItem(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (isActive) KatibaColors.KenyaGreen else Color.Black,
+                color = if (isActive) KatibaColors.KenyaGreen else MaterialTheme.colorScheme.onSurface,
                 fontWeight = if (isActive) FontWeight.Medium else FontWeight.Normal,
                 maxLines = 1,
                 modifier = Modifier.weight(1f)
@@ -486,7 +486,7 @@ private fun ChatHistoryItem(
                     Icon(
                         imageVector = MoreVertIcon,
                         contentDescription = "More options",
-                        tint = Color.Gray,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp)
                     )
                 }
@@ -563,40 +563,8 @@ private fun WelcomeScreenContent(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        // Gradient background
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFFFAF8F5),
-                            Color(0xFFFAF8F5),
-                            Color(0xFFFFF5F5)
-                        ),
-                        startY = 0f,
-                        endY = Float.POSITIVE_INFINITY
-                    )
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Transparent,
-                            Color(0xFFF0FFF0).copy(alpha = 0.3f)
-                        ),
-                        startX = 0f,
-                        endX = Float.POSITIVE_INFINITY
-                    )
-                )
-        )
-
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -881,7 +849,7 @@ private fun KatibaAIChatInput(
     // Styled to match the bottom navigation bar
     Surface(
         modifier = modifier,
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 8.dp,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
@@ -908,14 +876,14 @@ private fun KatibaAIChatInput(
                         Text(
                             text = "Ask Mzalendo...",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = Color.Gray.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         )
                     }
                     androidx.compose.foundation.text.BasicTextField(
                         value = value,
                         onValueChange = onValueChange,
                         textStyle = MaterialTheme.typography.bodyLarge.copy(
-                            color = Color.Black
+                            color = MaterialTheme.colorScheme.onSurface
                         ),
                         modifier = Modifier.fillMaxWidth(),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
@@ -948,27 +916,27 @@ private fun KatibaAIChatInput(
                     }
                 } else {
                     // Send button — grey when empty, black when has text
-                    Box(
-                        modifier = Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (value.isNotBlank()) KatibaColors.KenyaBlack
-                                else Color.Gray.copy(alpha = 0.3f)
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (value.isNotBlank()) MaterialTheme.colorScheme.onSurface
+                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
+                                )
+                                .clickable(
+                                    enabled = value.isNotBlank(),
+                                    onClick = onSend
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "Send",
+                                tint = if (value.isNotBlank()) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(18.dp)
                             )
-                            .clickable(
-                                enabled = value.isNotBlank(),
-                                onClick = onSend
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Send",
-                            tint = if (value.isNotBlank()) Color.White else Color.Gray,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                        }
                 }
             }
             // Extra space at the bottom for phone's navigation bar

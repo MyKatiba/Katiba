@@ -1,12 +1,16 @@
 package com.katiba.app.ui.plans
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -35,7 +39,7 @@ import com.katiba.app.ui.theme.KatibaColors
 /**
  * Duolingo-inspired learning path screen with a winding path layout
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun PlansScreen(
     onLessonClick: (String) -> Unit,
@@ -54,91 +58,102 @@ fun PlansScreen(
         buildPathItems(lessons, lessonsByChapter)
     }
 
-    Scaffold(
-        topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = "Learning Path",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    actions = {
-                        // XP indicator
-                        XpBadge(xp = userProfile.xp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        // Streak indicator
-                        StreakBadge(streak = userProfile.streak)
-                        Spacer(modifier = Modifier.width(8.dp))
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background
-                    ),
-                    windowInsets = WindowInsets(0.dp)
-                )
-                HorizontalDivider(thickness = 2.dp, color = Color.Gray.copy(alpha = 0.3f))
-            }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
-        ) {
-            // Progress summary
-            ProgressSummaryCard(
-                completedLessons = lessons.count { it.isCompleted },
-                totalLessons = lessons.size,
-                currentChapter = lessonsByChapter.entries
-                    .find { it.value.any { lesson -> lesson.isCurrent } }
-                    ?.key ?: 1
-            )
+    // Derive current chapter and lesson info for the progress card
+    val currentChapter = remember(lessonsByChapter) {
+        lessonsByChapter.entries.find { it.value.any { lesson -> lesson.isCurrent } }?.key ?: 1
+    }
+    val currentLesson = remember(lessons) { lessons.find { it.isCurrent } }
+    val completedInChapter = remember(lessons, currentChapter) {
+        lessons.filter { it.chapterNumber == currentChapter }.count { it.isCompleted }
+    }
+    val currentLessonNumber = completedInChapter + 1
 
-            // Winding learning path
+    val listState = rememberLazyListState()
+    val headerAlpha by animateFloatAsState(
+        targetValue = if (listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 20) 1f else 0f,
+        animationSpec = tween(durationMillis = 250),
+        label = "headerAlpha"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Fixed top spacer for the TopAppBar
+            Spacer(modifier = Modifier.height(56.dp))
+
+            // Fixed (non-scrolling) progress summary card
+            Box(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
+                ProgressSummaryCard(
+                    completedLessons = lessons.count { it.isCompleted },
+                    totalLessons = lessons.size,
+                    currentChapter = currentChapter,
+                    currentLessonNumber = currentLessonNumber,
+                    currentLessonTitle = currentLesson?.title ?: ""
+                )
+            }
+
+            // Scrollable lesson path
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 24.dp),
+                contentPadding = PaddingValues(bottom = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 itemsIndexed(
-                    items = pathItems,
-                    key = { _, item -> item.key }
-                ) { index, item ->
-                    when (item) {
-                        is PathItem.ChapterMilestone -> {
-                            ChapterMilestoneNode(
-                                chapterNumber = item.chapterNumber,
-                                chapterTitle = item.title,
-                                isCompleted = item.isCompleted,
-                                isLocked = item.isLocked
-                            )
-                        }
-                        is PathItem.LessonItem -> {
-                            val position = calculateNodePosition(item.indexInPath)
-                            val nextItem = pathItems.getOrNull(index + 1)
-                            val showConnector = nextItem != null && nextItem !is PathItem.ChapterMilestone
+                items = pathItems,
+                key = { _, item -> item.key }
+            ) { index, item ->
+                when (item) {
+                    is PathItem.ChapterMilestone -> {
+                        ChapterMilestoneNode(
+                            chapterNumber = item.chapterNumber,
+                            chapterTitle = item.title,
+                            isCompleted = item.isCompleted,
+                            isLocked = item.isLocked
+                        )
+                    }
+                    is PathItem.LessonItem -> {
+                        val position = calculateNodePosition(item.indexInPath)
+                        val nextItem = pathItems.getOrNull(index + 1)
+                        val showConnector = nextItem != null && nextItem !is PathItem.ChapterMilestone
 
-                            WindingLessonNode(
-                                lesson = item.lesson,
-                                horizontalPosition = position,
-                                showConnector = showConnector,
-                                nextPosition = if (showConnector) {
-                                    calculateNodePosition(item.indexInPath + 1)
-                                } else NodePosition.CENTER,
-                                onClick = {
-                                    if (!item.lesson.isLocked) {
-                                        onLessonClick(item.lesson.id)
-                                    }
+                        WindingLessonNode(
+                            lesson = item.lesson,
+                            horizontalPosition = position,
+                            showConnector = showConnector,
+                            nextPosition = if (showConnector) {
+                                calculateNodePosition(item.indexInPath + 1)
+                            } else NodePosition.CENTER,
+                            onClick = {
+                                if (!item.lesson.isLocked) {
+                                    onLessonClick(item.lesson.id)
                                 }
-                            )
-                        }
+                            }
+                        )
                     }
                 }
             }
         }
+        } // end Column
+
+        // Floating header
+        TopAppBar(
+            title = {
+                Text(
+                    text = "Learning Path",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            windowInsets = WindowInsets(0.dp),
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }
 
@@ -284,14 +299,14 @@ private fun StreakBadge(streak: Int) {
 private fun ProgressSummaryCard(
     completedLessons: Int,
     totalLessons: Int,
-    currentChapter: Int
+    currentChapter: Int,
+    currentLessonNumber: Int,
+    currentLessonTitle: String
 ) {
-    val progress = if (totalLessons > 0) completedLessons.toFloat() / totalLessons else 0f
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(
                 brush = Brush.horizontalGradient(
@@ -301,7 +316,7 @@ private fun ProgressSummaryCard(
                     )
                 )
             )
-            .padding(20.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -310,7 +325,7 @@ private fun ProgressSummaryCard(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Your Journey",
+                    text = "Your Progress",
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -321,29 +336,25 @@ private fun ProgressSummaryCard(
                     color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                // Progress bar
-                LinearProgressIndicator(
-                    progress = { progress },
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .height(8.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    color = Color.White,
-                    trackColor = Color.White.copy(alpha = 0.3f)
-                )
                 Spacer(modifier = Modifier.height(4.dp))
+                // Chapter + lesson detail subtitle
+                val lessonDetail = if (currentLessonTitle.isNotEmpty()) {
+                    "Chapter $currentChapter: Lesson $currentLessonNumber - $currentLessonTitle"
+                } else {
+                    "Chapter $currentChapter"
+                }
                 Text(
-                    text = "Chapter $currentChapter",
+                    text = lessonDetail,
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.7f)
                 )
             }
 
             // Circular progress percentage
+            val progress = if (totalLessons > 0) completedLessons.toFloat() / totalLessons else 0f
             Box(
                 modifier = Modifier
-                    .size(70.dp)
+                    .size(50.dp)
                     .clip(CircleShape)
                     .background(Color.White.copy(alpha = 0.2f))
                     .border(3.dp, Color.White.copy(alpha = 0.5f), CircleShape),
@@ -351,7 +362,7 @@ private fun ProgressSummaryCard(
             ) {
                 Text(
                     text = "${(progress * 100).toInt()}%",
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     color = Color.White,
                     fontWeight = FontWeight.Bold
                 )

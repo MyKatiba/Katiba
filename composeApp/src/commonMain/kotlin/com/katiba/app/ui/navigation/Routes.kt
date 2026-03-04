@@ -27,7 +27,8 @@ data object ForgotPasswordRoute : NavKey
 data class OTPVerificationRoute(
     val userId: String,
     val email: String,
-    val purpose: String // "email_verification" or "password_reset"
+    val purpose: String, // "email_verification" or "password_reset"
+    val autoResend: Boolean = false // true when redirected from login/signup with unverified email
 ) : NavKey
 
 @Serializable

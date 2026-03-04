@@ -122,6 +122,48 @@
           "response": []
         },
         {
+          "name": "Lookup User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.userId) {",
+                  "        pm.collectionVariables.set('userId', jsonData.data.userId);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/lookup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "lookup"]
+            },
+            "description": "Lookup an existing unverified user by email to get their userId for OTP verification."
+          },
+          "response": []
+        },
+        {
           "name": "Verify Email",
           "event": [
             {

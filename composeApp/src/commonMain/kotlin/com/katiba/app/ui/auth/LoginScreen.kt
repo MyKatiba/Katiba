@@ -60,6 +60,7 @@ import katiba.composeapp.generated.resources.app_icon
 import org.jetbrains.compose.resources.painterResource
 
 import com.katiba.app.data.repository.AuthRepository
+import com.katiba.app.data.model.EmailNotVerifiedException
 import com.katiba.app.data.service.GoogleSignInService
 import kotlinx.coroutines.launch
 
@@ -69,7 +70,8 @@ fun LoginScreen(
     googleSignInService: GoogleSignInService? = null,
     onLoginSuccess: () -> Unit,
     onNavigateToSignUp: () -> Unit,
-    onNavigateToForgotPassword: () -> Unit = { println("TODO: Forgot password flow") }
+    onNavigateToForgotPassword: () -> Unit = { println("TODO: Forgot password flow") },
+    onNavigateToOTP: (userId: String, email: String) -> Unit = { _, _ -> }
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -249,7 +251,13 @@ fun LoginScreen(
                                 if (result.isSuccess) {
                                     onLoginSuccess()
                                 } else {
-                                    errorMessage = result.exceptionOrNull()?.message ?: "Login failed"
+                                    val exception = result.exceptionOrNull()
+                                    if (exception is EmailNotVerifiedException) {
+                                        // Redirect to OTP verification instead of showing error
+                                        onNavigateToOTP(exception.userId, exception.email)
+                                    } else {
+                                        errorMessage = exception?.message ?: "Login failed"
+                                    }
                                 }
                             }
                         },
